@@ -1,5 +1,9 @@
 <?php
 
+print("<pre>");
+print("AQUI!!!!!!!!!!!!!");
+print("</pre>");
+die();
 session_start();
 require_once 'autoload.php';
 require_once 'config/db.php';

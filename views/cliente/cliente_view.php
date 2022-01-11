@@ -354,57 +354,69 @@ class cliente_view {
                     <thead>
                         <tr>
                             <th>#</th>
+                            <th>SAC AX 365</th>
                             <th>Cliente</th>
                             <th>Asesor</th>
                             <th>Fecha</th>
                             <th>Estado</th>
+                            <th>Credito</th>
                             <th class="disabled-sorting text-center">Acciones</th>
                         </tr>
                     </thead>
-                    <tfoot>
-                        <tr>
-                            <th>#</th>
-                            <th>Cliente</th>
-                            <th>Fecha</th>
-                            <th>Estado</th>
-                            <th class="text-center">Acciones</th>
-                        </tr>
-                    </tfoot>
                     <tbody>
                         <?php
                         
                         $arrEstadoCliente = utils::getSolicitudCreditoEstado();
+                        $arrEstadoClienteCredito = utils::getEstadoClienteCredito();
                         while( $rTMP = each($arrCreditos) ){
                             ?>
                             <tr>
                                 <td><?php print $rTMP["value"]["id_cliente"]?></td>
+                                <td><?php print $rTMP["value"]["codigo_externo_alta_cliente"]?></td>
                                 <td><?php print $rTMP["value"]["nombre_empresa"]."<br>".$rTMP["value"]["nombres"]." ".$rTMP["value"]["apellidos"]." <br> ".$rTMP["value"]["email"]?></td>
                                 <td><?php print $rTMP["value"]["nombres_asesor"]." ".$rTMP["value"]["apellidos_asesor"]?></td>
                                 <td><?php print $rTMP["value"]["fecha_creacion"]?></td>
                                 <td><?php print $arrEstadoCliente[trim($rTMP["value"]["estado"])]["nombre"]?></td>
-                                <td class="text-center">
+                                <td><?php print $rTMP["value"]["credito"] == "Y" ? $arrEstadoClienteCredito[trim($rTMP["value"]["estado_credito"])]["nombre"] : "No"?></td>
+                                <td class="text-right">
                                     <?php
                                     
                                     if( $rTMP["value"]["estado"] == "CCA" ){
+                                        ?>
+                                        <button onclick="fntSetCodigoSacAx365('<?php print $rTMP["value"]["id_cliente"]?>');" class="btn btn-sm btn-fill btn-info">
+                                            Codigo SAC AX 365
+                                        </button>
+                                        <br>
+                                        <?php
+                                    }
+                                    
+                                    if( $rTMP["value"]["estado"] == "CCA" && ( $rTMP["value"]["credito"] == "N" || empty($rTMP["value"]["credito"] == "N") ) ){
                                         ?>
                                         <button onclick="fntShowSolCreditoConsolidado('<?php print $rTMP["value"]["id_cliente"]?>');" class="btn btn-sm btn-fill btn-info">
                                             Datos de Cliente
                                         </button>
                                         <br>
-                                        <button onclick="fntEnviarFormularioCredito('<?php print $rTMP["value"]["id_cliente"]?>')" class="btn btn-fill btn-info btn-sm">
+                                        <button onclick="fntEnviarFormularioCredito('<?php print $rTMP["value"]["id_cliente"]?>', '<?php print $rTMP["value"]["nombre_empresa"]?>')" class="btn btn-fill btn-info btn-sm">
                                             Apertura de Credito
                                         </button>
                                         <?php
                                     }
-                                    elseif( $rTMP["value"]["estado"] == "FEP" || $rTMP["value"]["estado"] == "FRE" ){
+                                    elseif( $rTMP["value"]["estado"] == "FEP" || $rTMP["value"]["estado"] == "FRE" || $rTMP["value"]["estado_credito"] == "FPA" ){
                                         ?>
                                         <button onclick="fntShowSolCreditoConsolidado('<?php print $rTMP["value"]["id_cliente"]?>');" class="btn btn-sm btn-fill btn-info">
-                                            Alta de Cliente
+                                            Datos Consolidados
+                                        </button>    
+                                        <?php
+                                    }
+                                    elseif( $rTMP["value"]["estado"] == "CCA" || $rTMP["value"]["estado_credito"] == "FCA" ){
+                                        ?>
+                                        <button onclick="fntShowSolCreditoConsolidado('<?php print $rTMP["value"]["id_cliente"]?>');" class="btn btn-sm btn-fill btn-info">
+                                            Datos Consolidados
                                         </button>    
                                         <?php
                                     }
                                     else{
-                                        print("N/A");
+                                        //print("N/A");
                                     }
                                     
                                     ?>    
@@ -446,37 +458,69 @@ class cliente_view {
                 
             }
             
-            function fntEnviarFormularioCredito(){
+            function fntEnviarFormularioCredito(intCliente, strEmpresa){
+                
                 swal({
-                title: 'Estas seguro?',
-                text: 'Se enviara el formulario: 03-F04 Apertura de Crédito a clientes',
-                type: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Si',
-                cancelButtonText: 'No',
-                confirmButtonClass: "btn btn-success",
-                cancelButtonClass: "btn btn-danger",
-                buttonsStyling: false
-              }).then(function() {
-                swal({
-                  title: 'Deleted!',
-                  text: 'Your imaginary file has been deleted.',
-                  type: 'success',
-                  confirmButtonClass: "btn btn-success",
-                  buttonsStyling: false
-                }).catch(swal.noop)
-              }, function(dismiss) {
-                // dismiss can be 'overlay', 'cancel', 'close', 'esc', 'timer'
-                if (dismiss === 'cancel') {
-                  swal({
-                    title: 'Cancelled',
-                    text: 'Your imaginary file is safe :)',
-                    type: 'error',
-                    confirmButtonClass: "btn btn-info",
+                    title: 'Estas seguro?',
+                    text: 'Se enviara el formulario: 03-F04 Apertura de Crédito a: '+strEmpresa,
+                    type: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Si',
+                    cancelButtonText: 'No',
+                    confirmButtonClass: "btn btn-success",
+                    cancelButtonClass: "btn btn-danger",
                     buttonsStyling: false
-                  }).catch(swal.noop)
-                }
-              })
+                }).then(function() {
+                    
+                    
+                    $.ajax({
+                        url: "<?= base_url ?>cliente/&setEnviarFormularioCredito=true&cliente="+intCliente,
+                        success: function (result) {
+                            
+                            fntDrawListPerfil();
+                            
+                            swal({
+                                title: 'Listo!',
+                                text: 'Formulario Enviado.',
+                                type: 'success',
+                                confirmButtonClass: "btn btn-success",
+                                buttonsStyling: false
+                            }).catch(swal.noop)
+                            
+                        }
+                    });
+                    
+
+                            
+                                    
+                }, function(dismiss) {
+                    // dismiss can be 'overlay', 'cancel', 'close', 'esc', 'timer'
+                    if (dismiss === 'cancel') {
+                        swal({
+                            title: 'Cancelled',
+                            text: 'Your imaginary file is safe :)',
+                            type: 'error',
+                            confirmButtonClass: "btn btn-info",
+                            buttonsStyling: false
+                        }).catch(swal.noop)
+                    }
+                });
+              
+            }
+            
+            function fntSetCodigoSacAx365(intCredito){
+                
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&setCodigoSacAx365=true&cliente="+intCredito,
+                    success: function (result) {
+
+                        $("#mlContentAdminPerfil").html(result);
+                        $("#mlAdminCredito").modal("show");
+                        
+                    }
+                });
+                
+                
             }
             
         </script>
@@ -560,6 +604,8 @@ class cliente_view {
                 
             }
             
+            
+            
         </script>
         <?php
     }
@@ -585,6 +631,14 @@ class cliente_view {
             ?>
             <div class="modal-body" id="mlBodyAdminUsuario">
                 
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Nombre Empresa</label>
+                            <input type="text" class="form-control" name="txtNombreEmpresa" id="txtNombreEmpresa" autocomplete="off" value="" >
+                        </div>
+                    </div>
+                </div>
                 <h5 class="" style="font-weight: bold;">
                     Persona de Contacto
                 </h5>
@@ -643,14 +697,7 @@ class cliente_view {
                     </div>
                 </div>
                 
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="form-group">
-                            <label class="bmd-label-floating">Nombre Empresa</label>
-                            <input type="text" class="form-control" name="txtNombreEmpresa" id="txtNombreEmpresa" autocomplete="off" value="" >
-                        </div>
-                    </div>
-                </div>
+                
                 
                 <div class="row justify-content-center">
                     <div class="col-md-12 text-right">
@@ -792,8 +839,6 @@ class cliente_view {
                    
             }
             
-            
-
             function fntDrawListPerfil( ){
                 
                 $.ajax({
@@ -819,79 +864,183 @@ class cliente_view {
         
         ?>
         <div class="modal-body" id="mlBodyAdminUsuario">
-            
-            <h3 class="text-center" style="font-weight: bold;">
-                Cliente # <?php print $intSolCredito?> 
-            </h3>
-            <div class="row">
-                <div class="col-12">
-                    <?php 
-                    $this->fntSolCreditoFormBloque1($intSolCredito, $arrSolCredito, $arrSolCreditoDato, true);
-                    ?>
+        
+            <div class="card ">
+                <div class="card-header ">
+                    <h4 class="card-title">Cliente # <?php print $intSolCredito?> </h4>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-12">
-                    <?php 
-                    $this->fntSolCreditoFormBloque2($intSolCredito, $arrSolCredito, $arrSolCreditoDato, true);
-                    ?>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-12">
-                    <?php 
-                    $this->fntSolCreditoFormBloque3($intSolCredito, $arrSolCredito, $arrSolCreditoDato, true);
-                    ?>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-12">
-                    <?php 
-                    $this->fntSolCreditoFormBloque4($intSolCredito, $arrSolCredito, $arrSolCreditoDato, true);
-                    ?>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-12">
-                    <?php 
-                    $this->fntSolCreditoFormBloque5($intSolCredito, $arrSolCredito, $arrSolCreditoDato, true);
-                    ?>
-                </div>
-            </div>
-            
-            <?php
-            
-            if( $arrSolCredito["estado"] != "CCA" ){
-                ?>
-                
-                <div class="row">
-                    <div class="col-12">
+                <div class="card-body ">
+                    <ul class="nav nav-pills nav-pills-info" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-toggle="tab" href="#link1" role="tablist">
+                            Alta de Cliente
+                            </a>
+                        </li>
+                        <?php
                         
-                        <div class="form-group">
-                            <label class="bmd-label-floating">Notas de Rechazo</label>
-                            <textarea class="form-control" name="txtNotaRechazo" id="txtNotaRechazo" autocomplete="off" rows="4"></textarea>
-                            <input type="hidden" name="hidDireccionCompletaKey" value="<?php print isset($arrSolCreditoDato["DIRECCION"]) ? $arrSolCreditoDato["DIRECCION"]["id_sol_credito_dato"] : ""?>" >
+                        if( $arrSolCredito["credito"] == "Y" ){
+                            ?>
+                            <li class="nav-item">
+                                <a class="nav-link" data-toggle="tab" href="#link2" role="tablist">
+                                Solicitud de Credito
+                                </a>
+                            </li>
+                            <?php
+                        }
+                        
+                        ?>
+                            
+                    </ul>
+                    <div class="tab-content tab-space">
+                        <div class="tab-pane active" id="link1">
+                            
+                            <div class="row">
+                                <div class="col-12">
+                                    <?php 
+                                    $this->fntSolCreditoFormBloque1($intSolCredito, $arrSolCredito, $arrSolCreditoDato, true);
+                                    ?>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <?php 
+                                    $this->fntSolCreditoFormBloque2($intSolCredito, $arrSolCredito, $arrSolCreditoDato, true);
+                                    ?>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <?php 
+                                    $this->fntSolCreditoFormBloque3($intSolCredito, $arrSolCredito, $arrSolCreditoDato, true);
+                                    ?>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <?php 
+                                    $this->fntSolCreditoFormBloque4($intSolCredito, $arrSolCredito, $arrSolCreditoDato, true);
+                                    ?>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <?php 
+                                    $this->fntSolCreditoFormBloque5($intSolCredito, $arrSolCredito, $arrSolCreditoDato, true);
+                                    ?>
+                                </div>
+                            </div>
+                            
+                            <?php
+                            
+                            if( $arrSolCredito["estado"] != "CCA" ){
+                                ?>
+                                
+                                <div class="row">
+                                    <div class="col-12">
+                                        
+                                        <div class="form-group">
+                                            <label class="bmd-label-floating">Notas de Rechazo</label>
+                                            <textarea class="form-control" name="txtNotaRechazo" id="txtNotaRechazo" autocomplete="off" rows="4"></textarea>
+                                            <input type="hidden" name="hidDireccionCompletaKey" value="<?php print isset($arrSolCreditoDato["DIRECCION"]) ? $arrSolCreditoDato["DIRECCION"]["id_sol_credito_dato"] : ""?>" >
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-12 text-center">
+                                        
+                                        <button id="bntModalRechazo" onclick="fntRechazarSolCredito();" class="btn btn-fill btn-danger">
+                                            Rechazar
+                                        </button>   
+                                        <button id="bntModalAprobar" onclick="fntAprobarSolCredito();" class="btn btn-fill btn-success">
+                                            Aprobar
+                                        </button>    
+                                        
+                                    </div>
+                                </div>
+                                
+                                <?php
+                            }
+                            
+                            ?>    
+                            
+                            
+                        </div>
+                        <div class="tab-pane" id="link2">
+                            <div class="row">
+                            
+                                <div class="col-12">
+                                    <?php 
+                                    $this->drawFormCredito1($intSolCredito, $arrSolCredito, $arrSolCreditoDato, true);
+                                    ?>
+                                </div>
+                            </div>
+                            <div class="row">
+                                
+                                <div class="col-12">
+                                    <?php 
+                                    $this->drawFormCredito3($intSolCredito, $arrSolCredito, $arrSolCreditoDato, true);
+                                    ?>
+                                </div>
+                            </div>
+                            <div class="row">
+                                
+                                <div class="col-12">
+                                    <?php 
+                                    $this->drawFormCredito4($intSolCredito, $arrSolCredito, $arrSolCreditoDato, true);
+                                    ?>
+                                </div>
+                            </div>
+                            <div class="row">
+                                
+                                <div class="col-12">
+                                    <?php 
+                                    $this->drawFormCredito5($intSolCredito, $arrSolCredito, $arrSolCreditoDato, true);
+                                    ?>
+                                </div>
+                                
+                            </div>
+                            
+                            <?php
+                        
+                            if( $arrSolCredito["estado_credito"] == "FPA" ){
+                                ?>
+                                
+                                <div class="row">
+                                    <div class="col-12">
+                                        
+                                        <div class="form-group">
+                                            <label class="bmd-label-floating">Notas de Rechazo</label>
+                                            <textarea class="form-control" name="txtNotaRechazoCredito" id="txtNotaRechazoCredito" autocomplete="off" rows="4"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-12 text-center">
+                                        
+                                        <button id="bntModalRechazo" onclick="fntRechazarClienteCredito();" class="btn btn-fill btn-danger">
+                                            Rechazar
+                                        </button>   
+                                        <button id="bntModalAprobar" onclick="fntAprobarClienteCredito();" class="btn btn-fill btn-success">
+                                            Aprobar Credito
+                                        </button>    
+                                        
+                                    </div>
+                                </div>
+                                
+                                <?php
+                            }
+                            
+                            ?> 
+                                
+                            </div>
                         </div>
                     </div>
                 </div>
-                
-                <div class="row">
-                    <div class="col-12 text-center">
-                        
-                        <button id="bntModalRechazo" onclick="fntRechazarSolCredito();" class="btn btn-fill btn-danger">
-                            Rechazar
-                        </button>   
-                        <button id="bntModalAprobar" onclick="fntAprobarSolCredito();" class="btn btn-fill btn-success">
-                            Aprobar
-                        </button>    
-                        
-                    </div>
-                </div>
-                
-                <?php
-            }
+            </div>
             
-            ?>
+                        
             
                 
         </div>
@@ -973,6 +1122,49 @@ class cliente_view {
 
                 $.ajax({
                     url: "<?= base_url ?>cliente/&setCreditoAprobacion=true",
+                    type: "POST",
+                    data: formData,
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    dataType: "json",
+                    success: function (result) {
+                        
+                        $("#bntModalAprobar").prop('disabled', false);
+                        $("#bntModalAprobar").html('Guardar');
+                        if ( !result["error"] ) {
+
+                            md.showCustomNotification('top', 'right', "success", result["msg"]);
+                            fntDrawListPerfil();
+
+                        } else {
+                            md.showCustomNotification('top', 'right', "error", "Error");    
+                        }
+                        
+                        fntCloseModalCreditoConsolidado();
+
+                    },
+                    error: function (result) {
+
+                        md.showCustomNotification('top', 'right', "error", "Error");
+                        fntCloseModalCreditoConsolidado();
+                        $("#bntModalRechazo").prop('disabled', false);
+                        $("#bntModalRechazo").html('Guardar');
+
+                    }
+                });
+                    
+            }
+            
+            function fntAprobarClienteCredito(){
+                    
+                $("#bntModalAprobar").prop('disabled', true);
+                $("#bntModalAprobar").html('Cargando');
+                var formData = new FormData();
+                formData.append("hidSolCredito", "<?php print $intSolCredito?>");
+
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&setCreditoAprobacionCredito=true",
                     type: "POST",
                     data: formData,
                     cache: false,
@@ -1139,7 +1331,7 @@ class cliente_view {
             
             <div class="col-md-12">
                 <div class="form-group">
-                    <label class="bmd-label-floating">Direccion Completa del Residencia</label>
+                    <label class="bmd-label-floating">Direccion Completa</label>
                     <textarea class="form-control" <?php print $boolConsolidado ? "readonly" : ""?> name="txtDireccionResidencia" autocomplete="off"><?php print isset($arrSolCreditoDato["DIRECCION_RESIDENCIA"]) ? $arrSolCreditoDato["DIRECCION_RESIDENCIA"]["valor_input"] : ""?></textarea>
                     <input type="hidden" name="hidDireccionResidenciaKey" value="<?php print isset($arrSolCreditoDato["DIRECCION_RESIDENCIA"]) ? $arrSolCreditoDato["DIRECCION_RESIDENCIA"]["id_sol_credito_dato"] : ""?>" >
                 </div>
@@ -1707,7 +1899,7 @@ class cliente_view {
     
     public function fntSolCreditoFormBloque3($intCliente, $arrCredito, $arrCreditoDato = array(), $boolConsolidado = false){
         
-        $boolClientePotencial = $arrSolCredito["cliente_potencial"] == "Y" ? true : false;
+        $boolClientePotencial = $arrCredito["cliente_potencial"] == "Y" ? true : false;
         ?>
         <form method="POST" onsubmit="return false;" enctype="multipart/form-data" id="frmCreditoBloque1" autocomplete="off">
         <input type="hidden" name="hidSolCredito" value="<?php print $intCliente?>">
@@ -1723,12 +1915,12 @@ class cliente_view {
                         
                         if( $boolClientePotencial ){
                             ?>
-                            Cliente Potencial #<?php print $intSolCredito?> Formulario 03-F02
+                            Cliente Potencial #<?php print $intCliente?> Formulario 03-F02
                             <?php
                         }
                         else{
                             ?>
-                            Alta de Cliente #<?php print $intSolCredito?> Formulario 03-F02
+                            Alta de Cliente #<?php print $intCliente?> Formulario 03-F02
                             <?php
                         }
                         ?>
@@ -1975,6 +2167,8 @@ class cliente_view {
                         close: 'fa fa-remove'
                     }
                 });
+                
+                $('.selectpicker').selectpicker(); 
                 
                 <?php 
                 
@@ -2830,7 +3024,7 @@ class cliente_view {
                         if ( !result["error"] ) {
 
                             md.showCustomNotification('top', 'right', "success", result["msg"]);
-                            
+                                                                                 
                             //divContainerPrincipal
                 
                             $.ajax({
@@ -2936,6 +3130,7 @@ class cliente_view {
                     <th>Cliente</th>
                     <th>Fecha Creación</th>
                     <th>Estado</th>
+                    <th>Credito</th>
                     <th class="disabled-sorting text-right">Acciones</th>
                 </tr>
             </thead>
@@ -2945,6 +3140,7 @@ class cliente_view {
                     <th>Cliente</th>
                     <th>Fecha Creación</th>
                     <th>Estado</th>
+                    <th>Credito</th>
                     <th class="text-right">Acciones</th>
                 </tr>
             </tfoot>
@@ -2952,6 +3148,7 @@ class cliente_view {
                 <?php
                 
                 $arrEstado = utils::getSolicitudCreditoEstado();
+                $arrClienteCreditoEstado = utils::getEstadoClienteCredito();
                 while( $rTMP = each($arrClientes) ){
                     ?>
                     <tr>
@@ -2959,12 +3156,21 @@ class cliente_view {
                         <td><?php print $rTMP["value"]["nombre_empresa"]."<br>".$rTMP["value"]["nombres"]." ".$rTMP["value"]["apellidos"]." <br> ".$rTMP["value"]["email"]?></td>
                         <td><?php print $rTMP["value"]["fecha_creacion"]?></td>
                         <td><?php print $arrEstado[$rTMP["value"]["estado"]]["nombre"]?></td>
+                        <td><?php print $rTMP["value"]["credito"] == "Y" ? $arrClienteCreditoEstado[$rTMP["value"]["estado_credito"]]["nombre"] : "No"?></td>
                         <td class="text-right">
                             <?php
-                            if( $rTMP["value"]["estado"] != "FEP" && $rTMP["value"]["estado"] != "CA" ){
+                            if( $rTMP["value"]["estado"] != "FEP" && $rTMP["value"]["estado"] != "CCA" ){
                                 ?>
                                 <button onclick="fntShowSolCreditoFormBloque1('<?php print $rTMP["value"]["id_cliente"];?>');" class="btn btn-fill btn-info">
                                     Editar
+                                </button>
+                                <?php
+                            }
+                            
+                            if( $rTMP["value"]["credito"] == "Y" && $rTMP["value"]["estado_credito"] != "FPA" ){
+                                ?>
+                                <button onclick="fntShowFormCredito1('<?php print $rTMP["value"]["id_cliente"];?>');" class="btn btn-fill btn-info btn-sm">
+                                    Completar Formulario 03-F04
                                 </button>
                                 <?php
                             }
@@ -2996,10 +3202,1546 @@ class cliente_view {
                 
             }
             
+            function fntShowFormCredito1(intCliente){
+                
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&drawFormCredito1=true&cliente="+intCliente,
+                    success: function (result) {
+
+                        $("#divContainerPrincipal").html(result);
+                        
+                    }
+                });
+                
+                
+            }
+            
         </script>
         <?php
     }
-
     
+    public function drawFormCredito1($intCliente, $arrCliente, $arrClienteDato = array(), $boolConsolidado = false){
+        
+        ?>
+        <form method="POST" onsubmit="return false;" enctype="multipart/form-data" id="frmClienteCredito1" autocomplete="off">
+        <input type="hidden" name="hidCliente" value="<?php print $intCliente?>">
+        
+        <?php
+        
+        if( !$boolConsolidado ){
+            ?>
+            <div class="row justify-content-center">
+                
+                <div class="col-md-6 col-xs-12 mt-0">
+                    <h4 class="title text-center mt-0 mb-0 font-weight-bold">
+                        Credito #<?php print $intCliente?> Formulario 03-F04
+                    </h4>
+
+                    <div class="progress progress-line-info mt-0 mb-0">
+                        <div class="progress-bar progress-bar-info mt-0 mb-0" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 1%;">
+                            <span class="sr-only">1%</span>
+                        </div>
+                    </div>
+
+                </div>
+                
+            </div>
+            <div class="row">
+                
+                <div class="col-md-12 text-center mt-4">
+                    <button onclick="fntSetFormCredito1();" class="btn btn-fill btn-info">
+                        Siguiente &nbsp;&nbsp; <i class="fa fa-arrow-right" aria-hidden="true"></i>
+                    </button>
+                </div>            
+            </div>
+            
+            <?php
+        }
+        
+        if( !$boolConsolidado && !empty($arrCliente["nota_rechazo"]) ){
+            ?>
+            <div class="row justify-content-center">
+                
+                <div class="col-12 ">
+                    
+                    <small class="title text-left font-weight-bold ">
+                        Nota de Rechazo:
+                    </small>
+                    <br>
+                    <small class="title text-left font-weight-bold  text-danger">
+                        <?php print $arrCliente["nota_rechazo"]?>
+                    </small>
+                    <br>
+                    <small class="title text-left font-weight-bold ">
+                        Completa los pasos y envia el formulario
+                    </small>
+                    
+                </div>
+            </div>
+            
+            <?php    
+        }
+        
+        
+        $intPaisAsesor = $this->objModel->getUsuarioPais($arrCliente["id_usuario_asesor"]);
+        $arrEstado = $this->objModel->getEstado($intPaisAsesor);
+        ?>
+        
+        <div class="row justify-content-center">
+            
+            <div class="col-12 bg-white">
+            
+                <div class="row justify-content-center">
+                    
+                    <div class="col-12 bg-white">
+                        <h4 class="title text-left font-weight-bold">
+                            DATOS DEL NEGOCIO
+                        </h4>
+                    </div>
+                </div>
+                <div class="row">
+                    
+                    <div class="col-md-9">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Razon Social</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_RAZON_SOCIAL" autocomplete="off" value="<?php print isset($arrClienteDato["C_RAZON_SOCIAL"]) ? $arrClienteDato["C_RAZON_SOCIAL"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_RAZON_SOCIAL" value="<?php print isset($arrClienteDato["C_RAZON_SOCIAL"]) ? $arrClienteDato["C_RAZON_SOCIAL"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Antigüedad</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_RAZON_SOCIAL_ACTIGUEDAD" autocomplete="off" value="<?php print isset($arrClienteDato["C_RAZON_SOCIAL_ACTIGUEDAD"]) ? $arrClienteDato["C_RAZON_SOCIAL_ACTIGUEDAD"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_RAZON_SOCIAL_ACTIGUEDAD" value="<?php print isset($arrClienteDato["C_RAZON_SOCIAL_ACTIGUEDAD"]) ? $arrClienteDato["C_RAZON_SOCIAL_ACTIGUEDAD"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Nombre comercial</label>
+                            <textarea class="form-control" <?php print $boolConsolidado ? "readonly" : ""?> name="txtC_NOMBRE_COMERCIAL" autocomplete="off"><?php print isset($arrClienteDato["C_NOMBRE_COMERCIAL"]) ? $arrClienteDato["C_NOMBRE_COMERCIAL"]["valor_input"] : ""?></textarea>
+                            <input type="hidden" name="hidC_NOMBRE_COMERCIAL" value="<?php print isset($arrClienteDato["C_NOMBRE_COMERCIAL"]) ? $arrClienteDato["C_NOMBRE_COMERCIAL"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-9">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Número de Registro Tributario</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_NUM_REGISTRO_TRIBUTARIO" autocomplete="off" value="<?php print isset($arrClienteDato["C_NUM_REGISTRO_TRIBUTARIO"]) ? $arrClienteDato["C_NUM_REGISTRO_TRIBUTARIO"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_NUM_REGISTRO_TRIBUTARIO" value="<?php print isset($arrClienteDato["C_NUM_REGISTRO_TRIBUTARIO"]) ? $arrClienteDato["C_NUM_REGISTRO_TRIBUTARIO"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Antigüedad</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_NUM_REGISTRO_TRIBUTARIO_ACTIVIDAD" autocomplete="off" value="<?php print isset($arrClienteDato["C_NUM_REGISTRO_TRIBUTARIO_ACTIVIDAD"]) ? $arrClienteDato["C_NUM_REGISTRO_TRIBUTARIO_ACTIVIDAD"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_NUM_REGISTRO_TRIBUTARIO_ACTIVIDAD" value="<?php print isset($arrClienteDato["C_NUM_REGISTRO_TRIBUTARIO_ACTIVIDAD"]) ? $arrClienteDato["C_NUM_REGISTRO_TRIBUTARIO_ACTIVIDAD"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Direccion Comercial</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_DIRECCION_COMERCIAL" autocomplete="off" value="<?php print isset($arrClienteDato["C_DIRECCION_COMERCIAL"]) ? $arrClienteDato["C_DIRECCION_COMERCIAL"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_DIRECCION_COMERCIAL" value="<?php print isset($arrClienteDato["C_DIRECCION_COMERCIAL"]) ? $arrClienteDato["C_DIRECCION_COMERCIAL"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                    
+                        <label class="bmd-label-floating">Departamento</label>
+                        <input type="hidden" name="hidC_DIRECCION_COMERCIAL_DEPARTAMENTO" value="<?php print isset($arrClienteDato["C_DIRECCION_COMERCIAL_DEPARTAMENTO"]) ? $arrClienteDato["C_DIRECCION_COMERCIAL_DEPARTAMENTO"]["id_cliente_dato"] : ""?>" >
+                        <select name="slcC_DIRECCION_COMERCIAL_DEPARTAMENTO" id="slcC_DIRECCION_COMERCIAL_DEPARTAMENTO" <?php print $boolConsolidado ? "disabled" : ""?> class="selectpicker" data-style="select-with-transition" title="Departamento" data-size="<?php print count($arrEstado) / 2?>" onchange="fntDrawCiudad();">
+                            <?php
+                            
+                            while( $rTMP = each($arrEstado) ){
+                                $strSelected = isset($arrClienteDato["C_DIRECCION_COMERCIAL_DEPARTAMENTO"]) && $arrClienteDato["C_DIRECCION_COMERCIAL_DEPARTAMENTO"]["valor_input"] == $rTMP["key"] ? "selected" : "";
+                                ?>
+                                <option <?php print $strSelected;?> value="<?php print $rTMP["key"]?>"><?php print $rTMP["value"]["nombre"]?></option>
+                                <?php
+                            }
+                            
+                            ?>
+                        </select>
+                        
+                    </div>
+                    
+                    <div class="col-md-6">
+                        
+                        <label class="bmd-label-floating">Ciudad</label>
+                        <input type="hidden" name="hidC_DIRECCION_COMERCIAL_CIUDAD" value="<?php print isset($arrClienteDato["C_DIRECCION_COMERCIAL_CIUDAD"]) ? $arrClienteDato["C_DIRECCION_COMERCIAL_CIUDAD"]["id_cliente_dato"] : ""?>" >
+                        <div id="divFormCiudad">
+                            <select name="slcC_DIRECCION_COMERCIAL_CIUDAD" class="selectpicker" data-style="select-with-transition" title="Ciudad" data-size="0">
+                            </select>
+                        </div>
+                    </div>
+                    
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Clase de Contribuyente</label>
+                            <textarea class="form-control" <?php print $boolConsolidado ? "readonly" : ""?> name="txtC_CLASE_CONTRIBUYENTE" autocomplete="off"><?php print isset($arrClienteDato["C_CLASE_CONTRIBUYENTE"]) ? $arrClienteDato["C_CLASE_CONTRIBUYENTE"]["valor_input"] : ""?></textarea>
+                            <input type="hidden" name="hidC_CLASE_CONTRIBUYENTE" value="<?php print isset($arrClienteDato["C_CLASE_CONTRIBUYENTE"]) ? $arrClienteDato["C_CLASE_CONTRIBUYENTE"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                
+                    <div class="col-md-12">
+                        
+                        <label class="bmd-label-floating">Local</label>
+                        <input type="hidden" name="hidC_LOCAL" value="<?php print isset($arrClienteDato["C_LOCAL"]) ? $arrClienteDato["C_LOCAL"]["id_cliente_dato"] : ""?>" >
+                        <br>
+                        <?php
+                                        
+                        $arrTipoLocal = utils::getTipoLocal();
+                        while( $rTMP = each($arrTipoLocal) ){
+                            $strSelected = isset($arrClienteDato["C_LOCAL"]) && $arrClienteDato["C_LOCAL"]["valor_input"] == $rTMP["key"] ? "checked" : "";
+                            ?>
+                            <div class="form-check form-check-inline">
+
+                                <label class="form-check-label" for="rdC_LOCAL_<?php print $rTMP["key"]?>">
+                                    <input class="form-check-input" <?php print $boolConsolidado ? "disabled" : ""?>  <?php print $strSelected?> type="radio" name="rdC_LOCAL" id="rdC_LOCAL_<?php print $rTMP["key"]?>" value="<?php print $rTMP["key"]?>">
+                                    <span class="circle">
+                                        <span class="check"></span>
+                                    </span>
+                                    <?php print $rTMP["value"]["nombre"]?>
+                                </label>
+                            </div>
+                            <?php
+                        }
+                        
+                        ?>
+                        
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">NIT</label>
+                            <textarea class="form-control" <?php print $boolConsolidado ? "readonly" : ""?> name="txtC_NIT" autocomplete="off"><?php print isset($arrClienteDato["C_NIT"]) ? $arrClienteDato["C_NIT"]["valor_input"] : ""?></textarea>
+                            <input type="hidden" name="hidC_NIT" value="<?php print isset($arrClienteDato["C_NIT"]) ? $arrClienteDato["C_NIT"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Teléfono y/o Celular</label>
+                            <textarea class="form-control" <?php print $boolConsolidado ? "readonly" : ""?> name="txtC_TELEFONO_CELULAR" autocomplete="off"><?php print isset($arrClienteDato["C_TELEFONO_CELULAR"]) ? $arrClienteDato["C_TELEFONO_CELULAR"]["valor_input"] : ""?></textarea>
+                            <input type="hidden" name="hidC_TELEFONO_CELULAR" value="<?php print isset($arrClienteDato["C_TELEFONO_CELULAR"]) ? $arrClienteDato["C_TELEFONO_CELULAR"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Email</label>
+                            <textarea class="form-control" <?php print $boolConsolidado ? "readonly" : ""?> name="txtC_EMAIL" autocomplete="off"><?php print isset($arrClienteDato["C_EMAIL"]) ? $arrClienteDato["C_EMAIL"]["valor_input"] : ""?></textarea>
+                            <input type="hidden" name="hidC_EMAIL" value="<?php print isset($arrClienteDato["C_EMAIL"]) ? $arrClienteDato["C_EMAIL"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                                
+                </div>
+                
+            </div>
+        </div>
+                            
+            
+        </form>
+        <script>    
+        
+            $(document).ready(function () {
+                $('.selectpicker').selectpicker(); 
+                
+                
+                <?php 
+                
+                if( isset($arrClienteDato["C_DIRECCION_COMERCIAL_CIUDAD"]) ){
+                    ?>
+                    fntDrawCiudad();
+                    <?php
+                }
+                
+                ?>
+                   
+            });
+            
+            function fntDrawCiudad(){
+                
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&drawCiudad=true&ciudad=<?php print isset($arrClienteDato["C_DIRECCION_COMERCIAL_CIUDAD"]) ? $arrClienteDato["C_DIRECCION_COMERCIAL_CIUDAD"]["valor_input"] : 0; ?>&departamento="+$("#slcC_DIRECCION_COMERCIAL_DEPARTAMENTO").val(),
+                    success: function (result) {
+
+                        $("#divFormCiudad").html(result);
+                        
+                    }
+                });    
+                
+            }
+            
+            function fntShowSolCreditoFormBloque1(){
+                
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&showSolCreditoFormBloque1=true&credito=<?php print $intCliente?>",
+                    success: function (result) {
+
+                        $("#divContainerPrincipal").html(result);
+                        
+                    }
+                });
+                
+                
+            }
+        
+            function fntShowFormCredito2(intCliente){
+                
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&drawFormCredito2=true&cliente="+intCliente,
+                    success: function (result) {
+
+                        $("#divContainerPrincipal").html(result);
+                        
+                    }
+                });
+                
+                
+            }
+            
+            function fntSetFormCredito1(){
+                
+                $(".mlCargando").fadeIn();
+                var formData = new FormData(document.getElementById("frmClienteCredito1"));
+
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&setFormCredito1=true",
+                    type: "POST",
+                    data: formData,
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    dataType: "json",
+                    success: function (result) {
+                        
+                        $(".mlCargando").fadeOut();        
+                        if ( !result["error"] ) {
+
+                            md.showCustomNotification('top', 'right', "success", result["msg"]);
+                            
+                            fntShowFormCredito2(<?php print $intCliente?>);
+
+                        } else {
+                            md.showCustomNotification('top', 'right', "error", "Error");    
+                        }
+                        
+
+                    },
+                    error: function (result) {
+
+                        $(".mlCargando").fadeOut();
+                        md.showCustomNotification('top', 'right', "error", "Error");
+
+                    }
+                });
+                
+            }
+        
+        </script>
+        <?php
+        
+    }
+    
+    public function drawFormCredito2($intCliente, $arrCliente, $arrClienteDato = array(), $boolConsolidado = false){
+        
+        ?>
+        <form method="POST" onsubmit="return false;" enctype="multipart/form-data" id="frmClienteCredito1" autocomplete="off">
+        <input type="hidden" name="hidCliente" value="<?php print $intCliente?>">
+        
+        <?php
+        
+        if( !$boolConsolidado ){
+            ?>
+            <div class="row justify-content-center">
+                
+                <div class="col-md-6 col-xs-12 mt-0">
+                    <h4 class="title text-center mt-0 mb-0 font-weight-bold">
+                        Credito #<?php print $intCliente?> Formulario 03-F04
+                    </h4>
+
+                    <div class="progress progress-line-info mt-0 mb-0">
+                        <div class="progress-bar progress-bar-info mt-0 mb-0" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 25%;">
+                            <span class="sr-only">25%</span>
+                        </div>
+                    </div>
+
+                </div>
+                
+            </div>
+            <div class="row">
+                
+                <div class="col-md-12 text-center mt-4">
+                    <button onclick="fntShowFormCredito1(<?php print $intCliente?>);" class="btn btn-fill btn-info">
+                        <i class="fa fa-arrow-left" aria-hidden="true"></i> &nbsp;&nbsp; Anterior
+                    </button>
+                    <button onclick="fntSetFormCredito2();" class="btn btn-fill btn-info">
+                        Siguiente &nbsp;&nbsp; <i class="fa fa-arrow-right" aria-hidden="true"></i>
+                    </button>
+                </div>            
+            </div>
+            
+            <?php
+        }
+        
+        if( !$boolConsolidado && !empty($arrCliente["nota_rechazo"]) ){
+            ?>
+            <div class="row justify-content-center">
+                
+                <div class="col-12 ">
+                    
+                    <small class="title text-left font-weight-bold ">
+                        Nota de Rechazo:
+                    </small>
+                    <br>
+                    <small class="title text-left font-weight-bold  text-danger">
+                        <?php print $arrCliente["nota_rechazo"]?>
+                    </small>
+                    <br>
+                    <small class="title text-left font-weight-bold ">
+                        Completa los pasos y envia el formulario
+                    </small>
+                    
+                </div>
+            </div>
+            
+            <?php    
+        }
+        
+        
+        $intPaisAsesor = $this->objModel->getUsuarioPais($arrCliente["id_usuario_asesor"]);
+        $arrEstado = $this->objModel->getEstado($intPaisAsesor);
+        ?>
+        
+        <div class="row justify-content-center">
+            
+            <div class="col-12 bg-white">
+            
+                <div class="row justify-content-center">
+                    
+                    
+                </div>
+                <div class="row">
+                    
+                    <div class="col-12 bg-white">
+                        <h5 class="title text-left font-weight-bold">
+                            Datos del Propietario
+                        </h5>
+                    </div>
+                    
+                    <div class="col-md-9">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Nombre Completo del Propietario</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_NOMBRE_PROPIETARIO" autocomplete="off" value="<?php print isset($arrClienteDato["C_NOMBRE_PROPIETARIO"]) ? $arrClienteDato["C_NOMBRE_PROPIETARIO"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_NOMBRE_PROPIETARIO" value="<?php print isset($arrClienteDato["C_NOMBRE_PROPIETARIO"]) ? $arrClienteDato["C_NOMBRE_PROPIETARIO"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Nacionalidad</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_NOMBRE_PROPIETARIO_NACIONALIDAD" autocomplete="off" value="<?php print isset($arrClienteDato["C_NOMBRE_PROPIETARIO_NACIONALIDAD"]) ? $arrClienteDato["C_NOMBRE_PROPIETARIO_NACIONALIDAD"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_NOMBRE_PROPIETARIO_NACIONALIDAD" value="<?php print isset($arrClienteDato["C_NOMBRE_PROPIETARIO_NACIONALIDAD"]) ? $arrClienteDato["C_NOMBRE_PROPIETARIO_NACIONALIDAD"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                    
+                    <div class="col-md-9">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Numero de Cedula</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_NUMERO_CEDULA" autocomplete="off" value="<?php print isset($arrClienteDato["C_NUMERO_CEDULA"]) ? $arrClienteDato["C_NUMERO_CEDULA"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_NUMERO_CEDULA" value="<?php print isset($arrClienteDato["C_NUMERO_CEDULA"]) ? $arrClienteDato["C_NUMERO_CEDULA"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Email</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_PEMAIL" autocomplete="off" value="<?php print isset($arrClienteDato["C_PEMAIL"]) ? $arrClienteDato["C_PEMAIL"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_PEMAIL" value="<?php print isset($arrClienteDato["C_PEMAIL"]) ? $arrClienteDato["C_PEMAIL"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                    
+                    <div class="col-md-6">
+                    
+                        <label class="bmd-label-floating">Departamento</label>
+                        <input type="hidden" name="hidC_PDEPARTAMENTO" value="<?php print isset($arrClienteDato["C_PDEPARTAMENTO"]) ? $arrClienteDato["C_PDEPARTAMENTO"]["id_cliente_dato"] : ""?>" >
+                        <select name="slcC_PDEPARTAMENTO" id="slcC_PDEPARTAMENTO" <?php print $boolConsolidado ? "disabled" : ""?> class="selectpicker" data-style="select-with-transition" title="Departamento" data-size="<?php print count($arrEstado) / 2?>" onchange="fntDrawCiudad();">
+                            <?php
+                            
+                            while( $rTMP = each($arrEstado) ){
+                                $strSelected = isset($arrClienteDato["C_PDEPARTAMENTO"]) && $arrClienteDato["C_PDEPARTAMENTO"]["valor_input"] == $rTMP["key"] ? "selected" : "";
+                                ?>
+                                <option <?php print $strSelected;?> value="<?php print $rTMP["key"]?>"><?php print $rTMP["value"]["nombre"]?></option>
+                                <?php
+                            }
+                            
+                            ?>
+                        </select>
+                        
+                    </div>
+                    
+                    <div class="col-md-6">
+                        
+                        <label class="bmd-label-floating">Ciudad</label>
+                        <input type="hidden" name="hidC_PCIUDAD" value="<?php print isset($arrClienteDato["C_PCIUDAD"]) ? $arrClienteDato["C_PCIUDAD"]["id_cliente_dato"] : ""?>" >
+                        <div id="divFormC_PCIUDAD">
+                            <select name="slcC_PCIUDAD" class="selectpicker" data-style="select-with-transition" title="Ciudad" data-size="0">
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-9">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Dirección de Domicilio</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_PDIRECCION_DOMICILIO" autocomplete="off" value="<?php print isset($arrClienteDato["C_PDIRECCION_DOMICILIO"]) ? $arrClienteDato["C_PDIRECCION_DOMICILIO"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_PDIRECCION_DOMICILIO" value="<?php print isset($arrClienteDato["C_PDIRECCION_DOMICILIO"]) ? $arrClienteDato["C_PDIRECCION_DOMICILIO"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Celular</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_PCELULAR" autocomplete="off" value="<?php print isset($arrClienteDato["C_PCELULAR"]) ? $arrClienteDato["C_PCELULAR"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_PCELULAR" value="<?php print isset($arrClienteDato["C_PCELULAR"]) ? $arrClienteDato["C_PCELULAR"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                </div>
+                
+                
+                <div class="row">
+                    
+                    <div class="col-12 bg-white">
+                        <h5 class="title text-left font-weight-bold">
+                            Datos del Representante Legal
+                        </h5>
+                    </div>
+                    
+                    <div class="col-md-9">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Nombre Completo del Representante Legal</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_RLNOMBRE_PROPIETARIO" autocomplete="off" value="<?php print isset($arrClienteDato["C_RLNOMBRE_PROPIETARIO"]) ? $arrClienteDato["C_RLNOMBRE_PROPIETARIO"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_RLNOMBRE_PROPIETARIO" value="<?php print isset($arrClienteDato["C_RLNOMBRE_PROPIETARIO"]) ? $arrClienteDato["C_RLNOMBRE_PROPIETARIO"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Nacionalidad</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_RLNOMBRE_PROPIETARIO_NACIONALIDAD" autocomplete="off" value="<?php print isset($arrClienteDato["C_RLNOMBRE_PROPIETARIO_NACIONALIDAD"]) ? $arrClienteDato["C_RLNOMBRE_PROPIETARIO_NACIONALIDAD"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_RLNOMBRE_PROPIETARIO_NACIONALIDAD" value="<?php print isset($arrClienteDato["C_RLNOMBRE_PROPIETARIO_NACIONALIDAD"]) ? $arrClienteDato["C_RLNOMBRE_PROPIETARIO_NACIONALIDAD"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                    
+                    <div class="col-md-9">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Numero de Cedula</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_RLNUMERO_CEDULA" autocomplete="off" value="<?php print isset($arrClienteDato["C_RLNUMERO_CEDULA"]) ? $arrClienteDato["C_RLNUMERO_CEDULA"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_RLNUMERO_CEDULA" value="<?php print isset($arrClienteDato["C_RLNUMERO_CEDULA"]) ? $arrClienteDato["C_RLNUMERO_CEDULA"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Email</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_RLPEMAIL" autocomplete="off" value="<?php print isset($arrClienteDato["C_RLPEMAIL"]) ? $arrClienteDato["C_RLPEMAIL"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_RLPEMAIL" value="<?php print isset($arrClienteDato["C_RLPEMAIL"]) ? $arrClienteDato["C_RLPEMAIL"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                    
+                    <div class="col-md-6">
+                    
+                        <label class="bmd-label-floating">Departamento</label>
+                        <input type="hidden" name="hidC_RLPDEPARTAMENTO" value="<?php print isset($arrClienteDato["C_RLPDEPARTAMENTO"]) ? $arrClienteDato["C_RLPDEPARTAMENTO"]["id_cliente_dato"] : ""?>" >
+                        <select name="slcC_RLPDEPARTAMENTO" id="slcC_RLPDEPARTAMENTO" <?php print $boolConsolidado ? "disabled" : ""?> class="selectpicker" data-style="select-with-transition" title="Departamento" data-size="<?php print count($arrEstado) / 2?>" onchange="fntDrawCiudad();">
+                            <?php
+                            
+                            while( $rTMP = each($arrEstado) ){
+                                $strSelected = isset($arrClienteDato["C_RLPDEPARTAMENTO"]) && $arrClienteDato["C_RLPDEPARTAMENTO"]["valor_input"] == $rTMP["key"] ? "selected" : "";
+                                ?>
+                                <option <?php print $strSelected;?> value="<?php print $rTMP["key"]?>"><?php print $rTMP["value"]["nombre"]?></option>
+                                <?php
+                            }
+                            
+                            ?>
+                        </select>
+                        
+                    </div>
+                    
+                    <div class="col-md-6">
+                        
+                        <label class="bmd-label-floating">Ciudad</label>
+                        <input type="hidden" name="hidC_RLPCIUDAD" value="<?php print isset($arrClienteDato["C_RLPCIUDAD"]) ? $arrClienteDato["C_RLPCIUDAD"]["id_cliente_dato"] : ""?>" >
+                        <div id="divFormC_RLPCIUDAD">
+                            <select name="slcC_RLPCIUDAD" class="selectpicker" data-style="select-with-transition" title="Ciudad" data-size="0">
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-9">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Dirección de Domicilio</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_RLPDIRECCION_DOMICILIO" autocomplete="off" value="<?php print isset($arrClienteDato["C_RLPDIRECCION_DOMICILIO"]) ? $arrClienteDato["C_RLPDIRECCION_DOMICILIO"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_RLPDIRECCION_DOMICILIO" value="<?php print isset($arrClienteDato["C_RLPDIRECCION_DOMICILIO"]) ? $arrClienteDato["C_RLPDIRECCION_DOMICILIO"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Celular</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_RLPCELULAR" autocomplete="off" value="<?php print isset($arrClienteDato["C_RLPCELULAR"]) ? $arrClienteDato["C_RLPCELULAR"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_RLPCELULAR" value="<?php print isset($arrClienteDato["C_RLPCELULAR"]) ? $arrClienteDato["C_RLPCELULAR"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+            
+        </form>
+        <script>    
+        
+            $(document).ready(function () {
+                $('.selectpicker').selectpicker(); 
+                
+                
+                <?php 
+                
+                if( isset($arrClienteDato["C_DIRECCION_COMERCIAL_CIUDAD"]) ){
+                    ?>
+                    fntDrawCiudad();
+                    <?php
+                }
+                
+                ?>
+                   
+            });
+            
+            function fntDrawCiudad(){
+                
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&drawCiudad=true&ciudad=<?php print isset($arrClienteDato["C_DIRECCION_COMERCIAL_CIUDAD"]) ? $arrClienteDato["C_DIRECCION_COMERCIAL_CIUDAD"]["valor_input"] : 0; ?>&departamento="+$("#slcC_DIRECCION_COMERCIAL_DEPARTAMENTO").val(),
+                    success: function (result) {
+
+                        $("#divFormCiudad").html(result);
+                        
+                    }
+                });    
+                
+            }
+            
+            function fntShowFormCredito1(intCliente){
+                
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&drawFormCredito1=true&cliente="+intCliente,
+                    success: function (result) {
+
+                        $("#divContainerPrincipal").html(result);
+                        
+                    }
+                });
+                
+                
+            }
+            
+            function fntShowFormCredito3(intCliente){
+                
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&drawFormCredito3=true&cliente="+intCliente,
+                    success: function (result) {
+
+                        $("#divContainerPrincipal").html(result);
+                        
+                    }
+                });
+                
+                
+            }
+            
+            function fntSetFormCredito2(){
+                
+                $(".mlCargando").fadeIn();
+                var formData = new FormData(document.getElementById("frmClienteCredito1"));
+
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&setFormCredito2=true",
+                    type: "POST",
+                    data: formData,
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    dataType: "json",
+                    success: function (result) {
+                        
+                        $(".mlCargando").fadeOut();        
+                        if ( !result["error"] ) {
+
+                            md.showCustomNotification('top', 'right', "success", result["msg"]);
+                            
+                            fntShowFormCredito3(<?php print $intCliente?>);
+
+                        } else {
+                            md.showCustomNotification('top', 'right', "error", "Error");    
+                        }
+                        
+
+                    },
+                    error: function (result) {
+
+                        $(".mlCargando").fadeOut();
+                        md.showCustomNotification('top', 'right', "error", "Error");
+
+                    }
+                });
+                
+            }
+        
+        </script>
+        <?php
+        
+    }
+
+    public function drawFormCredito3($intCliente, $arrCliente, $arrClienteDato = array(), $boolConsolidado = false){
+        
+        ?>
+        <form method="POST" onsubmit="return false;" enctype="multipart/form-data" id="frmClienteCredito1" autocomplete="off">
+        <input type="hidden" name="hidCliente" value="<?php print $intCliente?>">
+        
+        <?php
+        
+        if( !$boolConsolidado ){
+            ?>
+            <div class="row justify-content-center">
+                
+                <div class="col-md-6 col-xs-12 mt-0">
+                    <h4 class="title text-center mt-0 mb-0 font-weight-bold">
+                        Credito #<?php print $intCliente?> Formulario 03-F04
+                    </h4>
+
+                    <div class="progress progress-line-info mt-0 mb-0">
+                        <div class="progress-bar progress-bar-info mt-0 mb-0" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 50%;">
+                            <span class="sr-only">1%</span>
+                        </div>
+                    </div>
+
+                </div>
+                
+            </div>
+            <div class="row">
+                
+                <div class="col-md-12 text-center mt-4">
+                    <button onclick="fntShowFormCredito2(<?php print $intCliente?>);" class="btn btn-fill btn-info">
+                        <i class="fa fa-arrow-left" aria-hidden="true"></i> &nbsp;&nbsp; Anterior
+                    </button>
+                    <button onclick="fntSetFormCredito3();" class="btn btn-fill btn-info">
+                        Siguiente &nbsp;&nbsp; <i class="fa fa-arrow-right" aria-hidden="true"></i>
+                    </button>
+                </div>            
+            </div>
+            
+            <?php
+        }
+        
+        if( !$boolConsolidado && !empty($arrCliente["nota_rechazo"]) ){
+            ?>
+            <div class="row justify-content-center">
+                
+                <div class="col-12 ">
+                    
+                    <small class="title text-left font-weight-bold ">
+                        Nota de Rechazo:
+                    </small>
+                    <br>
+                    <small class="title text-left font-weight-bold  text-danger">
+                        <?php print $arrCliente["nota_rechazo"]?>
+                    </small>
+                    <br>
+                    <small class="title text-left font-weight-bold ">
+                        Completa los pasos y envia el formulario
+                    </small>
+                    
+                </div>
+            </div>
+            
+            <?php    
+        }
+        
+        
+        $intPaisAsesor = $this->objModel->getUsuarioPais($arrCliente["id_usuario_asesor"]);
+        $arrEstado = $this->objModel->getEstado($intPaisAsesor);
+        ?>
+        
+        <div class="row justify-content-center">
+            
+            <div class="col-12 bg-white">
+            
+                <div class="row justify-content-center">
+                    
+                    
+                </div>
+                <div class="row">
+                    
+                    <div class="col-12 bg-white">
+                        <h5 class="title text-left font-weight-bold">
+                            CONTACTOS DEL CLIENTE
+                        </h5>
+                    </div>
+                    
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Nombre de encargado de Pagos</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_ENCARGADO_PAGOS" autocomplete="off" value="<?php print isset($arrClienteDato["C_ENCARGADO_PAGOS"]) ? $arrClienteDato["C_ENCARGADO_PAGOS"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_ENCARGADO_PAGOS" value="<?php print isset($arrClienteDato["C_ENCARGADO_PAGOS"]) ? $arrClienteDato["C_ENCARGADO_PAGOS"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Correo Electrónico</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_ENCARGADO_PAGOS_EMAIL" autocomplete="off" value="<?php print isset($arrClienteDato["C_ENCARGADO_PAGOS_EMAIL"]) ? $arrClienteDato["C_ENCARGADO_PAGOS_EMAIL"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_ENCARGADO_PAGOS_EMAIL" value="<?php print isset($arrClienteDato["C_ENCARGADO_PAGOS_EMAIL"]) ? $arrClienteDato["C_ENCARGADO_PAGOS_EMAIL"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Nombre de encargado de Compras</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_ENCARGADO_COMPRAS" autocomplete="off" value="<?php print isset($arrClienteDato["C_ENCARGADO_COMPRAS"]) ? $arrClienteDato["C_ENCARGADO_COMPRAS"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_ENCARGADO_COMPRAS" value="<?php print isset($arrClienteDato["C_ENCARGADO_COMPRAS"]) ? $arrClienteDato["C_ENCARGADO_COMPRAS"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Correo Electrónico</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_ENCARGADO_COMPRAS_EMAIL" autocomplete="off" value="<?php print isset($arrClienteDato["C_ENCARGADO_COMPRAS_EMAIL"]) ? $arrClienteDato["C_ENCARGADO_COMPRAS_EMAIL"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_ENCARGADO_COMPRAS_EMAIL" value="<?php print isset($arrClienteDato["C_ENCARGADO_COMPRAS_EMAIL"]) ? $arrClienteDato["C_ENCARGADO_COMPRAS_EMAIL"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                </div>
+                
+                <div class="row">
+                    
+                    <div class="col-12 bg-white">
+                        <h5 class="title text-left font-weight-bold">
+                            FORMAS DE PAGO Y CRÉDITO
+                        </h5>
+                    </div>
+                    
+                    <div class="col-md-12">
+                        
+                        <label class="bmd-label-floating">Formas de Pago</label>
+                        <input type="hidden" name="hidC_FORMA_PAGO" value="<?php print isset($arrClienteDato["C_FORMA_PAGO"]) ? $arrClienteDato["C_FORMA_PAGO"]["id_sol_credito_dato"] : ""?>" >
+                        <br>
+                        <?php
+                        $arrFormaPago = utils::getFormaPago();
+                        while( $rTMP = each($arrFormaPago) ){
+                            $strSelected = isset($arrClienteDato["C_FORMA_PAGO"]) && $arrClienteDato["C_FORMA_PAGO"]["valor_input"] == $rTMP["key"] ? "checked" : "";
+                            ?>
+                            <div class="form-check form-check-inline">
+
+                                <label class="form-check-label" for="rdC_FORMA_PAGO_<?php print $rTMP["key"]?>">
+                                    <input class="form-check-input" <?php print $boolConsolidado ? "disabled" : ""?>  <?php print $strSelected?> type="radio" name="rdC_FORMA_PAGO" id="rdC_FORMA_PAGO_<?php print $rTMP["key"]?>" value="<?php print $rTMP["key"]?>">
+                                    <span class="circle">
+                                        <span class="check"></span>
+                                    </span>
+                                    <?php print $rTMP["value"]["nombre"]?>
+                                </label>
+                            </div>
+                            <?php
+                        }
+                        
+                        ?>
+                        
+                    </div>
+                    
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Monto de crédito solicitado</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_MONTO_SOLICITADO" autocomplete="off" value="<?php print isset($arrClienteDato["C_MONTO_SOLICITADO"]) ? $arrClienteDato["C_MONTO_SOLICITADO"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_MONTO_SOLICITADO" value="<?php print isset($arrClienteDato["C_MONTO_SOLICITADO"]) ? $arrClienteDato["C_MONTO_SOLICITADO"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Límite de crédito aprobado</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_MONTO_LIMITE_APROBADO" autocomplete="off" value="<?php print isset($arrClienteDato["C_MONTO_LIMITE_APROBADO"]) ? $arrClienteDato["C_MONTO_LIMITE_APROBADO"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_MONTO_LIMITE_APROBADO" value="<?php print isset($arrClienteDato["C_MONTO_LIMITE_APROBADO"]) ? $arrClienteDato["C_MONTO_LIMITE_APROBADO"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+            
+        </form>
+        <script>    
+        
+            $(document).ready(function () {
+                $('.selectpicker').selectpicker(); 
+                
+                
+                <?php 
+                
+                if( isset($arrClienteDato["C_DIRECCION_COMERCIAL_CIUDAD"]) ){
+                    ?>
+                    fntDrawCiudad();
+                    <?php
+                }
+                
+                ?>
+                   
+            });
+            
+            function fntDrawCiudad(){
+                
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&drawCiudad=true&ciudad=<?php print isset($arrClienteDato["C_DIRECCION_COMERCIAL_CIUDAD"]) ? $arrClienteDato["C_DIRECCION_COMERCIAL_CIUDAD"]["valor_input"] : 0; ?>&departamento="+$("#slcC_DIRECCION_COMERCIAL_DEPARTAMENTO").val(),
+                    success: function (result) {
+
+                        $("#divFormCiudad").html(result);
+                        
+                    }
+                });    
+                
+            }
+                 
+            
+            function fntShowFormCredito2(intCliente){
+                
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&drawFormCredito2=true&cliente="+intCliente,
+                    success: function (result) {
+
+                        $("#divContainerPrincipal").html(result);
+                        
+                    }
+                });
+                
+                
+            }
+            
+            function fntShowFormCredito4(intCliente){
+                
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&drawFormCredito4=true&cliente="+intCliente,
+                    success: function (result) {
+
+                        $("#divContainerPrincipal").html(result);
+                        
+                    }
+                });
+                
+                
+            }
+            
+            function fntSetFormCredito3(){
+                
+                $(".mlCargando").fadeIn();
+                var formData = new FormData(document.getElementById("frmClienteCredito1"));
+
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&setFormCredito3=true",
+                    type: "POST",
+                    data: formData,
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    dataType: "json",
+                    success: function (result) {
+                        
+                        $(".mlCargando").fadeOut();        
+                        if ( !result["error"] ) {
+
+                            md.showCustomNotification('top', 'right', "success", result["msg"]);
+                            
+                            fntShowFormCredito4(<?php print $intCliente?>);
+
+                        } else {
+                            md.showCustomNotification('top', 'right', "error", "Error");    
+                        }
+                        
+
+                    },
+                    error: function (result) {
+
+                        $(".mlCargando").fadeOut();
+                        md.showCustomNotification('top', 'right', "error", "Error");
+
+                    }
+                });
+                
+            }
+        
+        </script>
+        <?php
+        
+    }
+    
+    public function drawFormCredito4($intCliente, $arrCliente, $arrClienteDato = array(), $boolConsolidado = false){
+        
+        ?>
+        <form method="POST" onsubmit="return false;" enctype="multipart/form-data" id="frmClienteCredito1" autocomplete="off">
+        <input type="hidden" name="hidCliente" value="<?php print $intCliente?>">
+        
+        <?php
+        
+        if( !$boolConsolidado ){
+            ?>
+            <div class="row justify-content-center">
+                
+                <div class="col-md-6 col-xs-12 mt-0">
+                    <h4 class="title text-center mt-0 mb-0 font-weight-bold">
+                        Credito #<?php print $intCliente?> Formulario 03-F04
+                    </h4>
+
+                    <div class="progress progress-line-info mt-0 mb-0">
+                        <div class="progress-bar progress-bar-info mt-0 mb-0" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 75%;">
+                            <span class="sr-only">1%</span>
+                        </div>
+                    </div>
+
+                </div>
+                
+            </div>
+            <div class="row">
+                
+                <div class="col-md-12 text-center mt-4">
+                    <button onclick="fntShowFormCredito3(<?php print $intCliente?>);" class="btn btn-fill btn-info">
+                        <i class="fa fa-arrow-left" aria-hidden="true"></i> &nbsp;&nbsp; Anterior
+                    </button>
+                    <button onclick="fntSetFormCredito4();" class="btn btn-fill btn-info">
+                        Siguiente &nbsp;&nbsp; <i class="fa fa-arrow-right" aria-hidden="true"></i>
+                    </button>
+                </div>            
+            </div>
+            
+            <?php
+        }
+        
+        if( !$boolConsolidado && !empty($arrCliente["nota_rechazo"]) ){
+            ?>
+            <div class="row justify-content-center">
+                
+                <div class="col-12 ">
+                    
+                    <small class="title text-left font-weight-bold ">
+                        Nota de Rechazo:
+                    </small>
+                    <br>
+                    <small class="title text-left font-weight-bold  text-danger">
+                        <?php print $arrCliente["nota_rechazo"]?>
+                    </small>
+                    <br>
+                    <small class="title text-left font-weight-bold ">
+                        Completa los pasos y envia el formulario
+                    </small>
+                    
+                </div>
+            </div>
+            
+            <?php    
+        }
+        
+        
+        $intPaisAsesor = $this->objModel->getUsuarioPais($arrCliente["id_usuario_asesor"]);
+        $arrEstado = $this->objModel->getEstado($intPaisAsesor);
+        ?>
+        
+        <div class="row justify-content-center">
+            
+            <div class="col-12 bg-white">
+            
+                <div class="row">
+                    
+                    <div class="col-12 bg-white">
+                        <h5 class="title text-left font-weight-bold">
+                            Referencias Comerciales
+                        </h5>
+                    </div>
+                    
+                </div>
+                
+                <?php
+        
+                for( $i = 1; $i <= 3; $i++ ){
+                    ?>
+                    <div class="row">
+                        
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="bmd-label-floating">Nombre de la Empresa <?php print $i?></label>
+                                <input type="text" <?php print $boolConsolidado ? "readonly" : ""?>  class="form-control" name="txtC_REFERENCIA_NOMBRE_EMPRESA_<?php print $i?>" autocomplete="off" value="<?php print isset($arrClienteDato["C_REFERENCIA_NOMBRE_EMPRESA_{$i}"]) ? $arrClienteDato["C_REFERENCIA_NOMBRE_EMPRESA_{$i}"]["valor_input"] : ""?>" >
+                                <input type="hidden" name="hidC_REFERENCIA_NOMBRE_EMPRESA_<?php print $i?>" value="<?php print isset($arrClienteDato["C_REFERENCIA_NOMBRE_EMPRESA_{$i}"]) ? $arrClienteDato["C_REFERENCIA_NOMBRE_EMPRESA_{$i}"]["id_sol_credito_dato"] : ""?>" >
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="bmd-label-floating">Desde cuando le compra a la empresa <?php print $i?></label>
+                                <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_REFERENCIA_DESDE_COMPRA_EMPRESA_<?php print $i?>" autocomplete="off" value="<?php print isset($arrClienteDato["C_REFERENCIA_DESDE_COMPRA_EMPRESA_{$i}"]) ? $arrClienteDato["C_REFERENCIA_DESDE_COMPRA_EMPRESA_{$i}"]["valor_input"] : ""?>" >
+                                <input type="hidden" name="hidC_REFERENCIA_DESDE_COMPRA_EMPRESA_<?php print $i?>" value="<?php print isset($arrClienteDato["C_REFERENCIA_DESDE_COMPRA_EMPRESA_{$i}"]) ? $arrClienteDato["C_REFERENCIA_DESDE_COMPRA_EMPRESA_{$i}"]["id_sol_credito_dato"] : ""?>" >
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="bmd-label-floating">No. Telefono <?php print $i?></label>
+                                <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_REFERENCIA_TELEFONO_EMPRESA_<?php print $i?>" autocomplete="off" value="<?php print isset($arrClienteDato["C_REFERENCIA_TELEFONO_EMPRESA_{$i}"]) ? $arrClienteDato["C_REFERENCIA_TELEFONO_EMPRESA_{$i}"]["valor_input"] : ""?>" >
+                                <input type="hidden" name="hidC_REFERENCIA_TELEFONO_EMPRESA_<?php print $i?>" value="<?php print isset($arrClienteDato["C_REFERENCIA_TELEFONO_EMPRESA_{$i}"]) ? $arrClienteDato["C_REFERENCIA_TELEFONO_EMPRESA_{$i}"]["id_sol_credito_dato"] : ""?>" >
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="bmd-label-floating">Limite de Crédito <?php print $i?></label>
+                                <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_REFERENCIA_LIMITE_CREDITO_EMPRESA_<?php print $i?>" autocomplete="off" value="<?php print isset($arrClienteDato["C_REFERENCIA_LIMITE_CREDITO_EMPRESA_{$i}"]) ? $arrClienteDato["C_REFERENCIA_LIMITE_CREDITO_EMPRESA_{$i}"]["valor_input"] : ""?>" >
+                                <input type="hidden" name="hidC_REFERENCIA_LIMITE_CREDITO_EMPRESA_<?php print $i?>" value="<?php print isset($arrClienteDato["C_REFERENCIA_LIMITE_CREDITO_EMPRESA_{$i}"]) ? $arrClienteDato["C_REFERENCIA_LIMITE_CREDITO_EMPRESA_{$i}"]["id_sol_credito_dato"] : ""?>" >
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="bmd-label-floating">Desde cuando le compra a la empresa: <?php print $i?></label>
+                                <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_REFERENCIA_CUANTO_COMPRA_EMPRESA_<?php print $i?>" autocomplete="off" value="<?php print isset($arrClienteDato["C_REFERENCIA_CUANTO_COMPRA_EMPRESA_{$i}"]) ? $arrClienteDato["C_REFERENCIA_CUANTO_COMPRA_EMPRESA_{$i}"]["valor_input"] : ""?>" >
+                                <input type="hidden" name="hidC_REFERENCIA_CUANTO_COMPRA_EMPRESA_<?php print $i?>" value="<?php print isset($arrClienteDato["C_REFERENCIA_CUANTO_COMPRA_EMPRESA_{$i}"]) ? $arrClienteDato["C_REFERENCIA_CUANTO_COMPRA_EMPRESA_{$i}"]["id_sol_credito_dato"] : ""?>" >
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <hr style="border: 1px solid black;">    
+                        </div>
+                    </div>
+                    
+                    <?php
+                }
+                
+                ?>
+                
+                <div class="row">
+                    
+                    <div class="col-12 bg-white">
+                        <h5 class="title text-left font-weight-bold">
+                            Referencia Bancaria                                
+                        </h5>
+                    </div>
+                    
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Nombre Del Banco</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_BANCO_NOMBRE" autocomplete="off" value="<?php print isset($arrClienteDato["C_BANCO_NOMBRE"]) ? $arrClienteDato["C_BANCO_NOMBRE"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_BANCO_NOMBRE" value="<?php print isset($arrClienteDato["C_BANCO_NOMBRE"]) ? $arrClienteDato["C_BANCO_NOMBRE"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Tipo de cuenta</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_BANCO_TIPO_CUENTA" autocomplete="off" value="<?php print isset($arrClienteDato["C_BANCO_TIPO_CUENTA"]) ? $arrClienteDato["C_BANCO_TIPO_CUENTA"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_BANCO_TIPO_CUENTA" value="<?php print isset($arrClienteDato["C_BANCO_TIPO_CUENTA"]) ? $arrClienteDato["C_BANCO_TIPO_CUENTA"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Número de cuenta</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_BANCO_NUMERO_CUENTA" autocomplete="off" value="<?php print isset($arrClienteDato["C_BANCO_NUMERO_CUENTA"]) ? $arrClienteDato["C_BANCO_NUMERO_CUENTA"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_BANCO_NUMERO_CUENTA" value="<?php print isset($arrClienteDato["C_BANCO_NUMERO_CUENTA"]) ? $arrClienteDato["C_BANCO_NUMERO_CUENTA"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Oficial encargado de su cuenta</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_BANCO_ENCARGADO_CUENTA" autocomplete="off" value="<?php print isset($arrClienteDato["C_BANCO_ENCARGADO_CUENTA"]) ? $arrClienteDato["C_BANCO_ENCARGADO_CUENTA"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_BANCO_ENCARGADO_CUENTA" value="<?php print isset($arrClienteDato["C_BANCO_ENCARGADO_CUENTA"]) ? $arrClienteDato["C_BANCO_ENCARGADO_CUENTA"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="bmd-label-floating">Teléfono del Banco</label>
+                            <input type="text" <?php print $boolConsolidado ? "readonly" : ""?> class="form-control" name="txtC_BANCO_TELEFONO_BANCO" autocomplete="off" value="<?php print isset($arrClienteDato["C_BANCO_TELEFONO_BANCO"]) ? $arrClienteDato["C_BANCO_TELEFONO_BANCO"]["valor_input"] : ""?>" >
+                            <input type="hidden" name="hidC_BANCO_TELEFONO_BANCO" value="<?php print isset($arrClienteDato["C_BANCO_TELEFONO_BANCO"]) ? $arrClienteDato["C_BANCO_TELEFONO_BANCO"]["id_cliente_dato"] : ""?>" >
+                        </div>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+            
+        </form>
+        <script>    
+        
+            $(document).ready(function () {
+                $('.selectpicker').selectpicker(); 
+                
+                
+                <?php 
+                
+                if( isset($arrClienteDato["C_DIRECCION_COMERCIAL_CIUDAD"]) ){
+                    ?>
+                    fntDrawCiudad();
+                    <?php
+                }
+                
+                ?>
+                   
+            });
+            
+            function fntDrawCiudad(){
+                
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&drawCiudad=true&ciudad=<?php print isset($arrClienteDato["C_DIRECCION_COMERCIAL_CIUDAD"]) ? $arrClienteDato["C_DIRECCION_COMERCIAL_CIUDAD"]["valor_input"] : 0; ?>&departamento="+$("#slcC_DIRECCION_COMERCIAL_DEPARTAMENTO").val(),
+                    success: function (result) {
+
+                        $("#divFormCiudad").html(result);
+                        
+                    }
+                });    
+                
+            }
+                 
+            function fntShowFormCredito3(intCliente){
+                
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&drawFormCredito3=true&cliente="+intCliente,
+                    success: function (result) {
+
+                        $("#divContainerPrincipal").html(result);
+                        
+                    }
+                });
+                
+                
+            }
+            
+            function fntShowFormCredito5(intCliente){
+                
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&drawFormCredito5=true&cliente="+intCliente,
+                    success: function (result) {
+
+                        $("#divContainerPrincipal").html(result);
+                        
+                    }
+                });
+                
+                
+            }
+            
+            function fntSetFormCredito4(){
+                
+                $(".mlCargando").fadeIn();
+                var formData = new FormData(document.getElementById("frmClienteCredito1"));
+
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&setFormCredito4=true",
+                    type: "POST",
+                    data: formData,
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    dataType: "json",
+                    success: function (result) {
+                        
+                        $(".mlCargando").fadeOut();        
+                        if ( !result["error"] ) {
+
+                            md.showCustomNotification('top', 'right', "success", result["msg"]);
+                            
+                            fntShowFormCredito5(<?php print $intCliente?>);
+
+                        } else {
+                            md.showCustomNotification('top', 'right', "error", "Error");    
+                        }
+                        
+
+                    },
+                    error: function (result) {
+
+                        $(".mlCargando").fadeOut();
+                        md.showCustomNotification('top', 'right', "error", "Error");
+
+                    }
+                });
+                
+            }
+        
+        </script>
+        <?php
+        
+    }
+    
+    public function drawFormCredito5($intCliente, $arrCliente, $arrClienteDato = array(), $boolConsolidado = false){
+        
+        ?>
+        <form method="POST" onsubmit="return false;" enctype="multipart/form-data" id="frmClienteCredito1" autocomplete="off">
+        <input type="hidden" name="hidCliente" value="<?php print $intCliente?>">
+        
+        <?php
+        
+        if( !$boolConsolidado ){
+            ?>
+            <div class="row justify-content-center">
+                
+                <div class="col-md-6 col-xs-12 mt-0">
+                    <h4 class="title text-center mt-0 mb-0 font-weight-bold">
+                        Credito #<?php print $intCliente?> Formulario 03-F04
+                    </h4>
+
+                    <div class="progress progress-line-info mt-0 mb-0">
+                        <div class="progress-bar progress-bar-info mt-0 mb-0" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 90%;">
+                            <span class="sr-only">1%</span>
+                        </div>
+                    </div>
+
+                </div>
+                
+            </div>
+            <div class="row">
+                
+                <div class="col-md-12 text-center mt-4">
+                    <button onclick="fntShowFormCredito4(<?php print $intCliente?>);" class="btn btn-fill btn-info">
+                        <i class="fa fa-arrow-left" aria-hidden="true"></i> &nbsp;&nbsp; Anterior
+                    </button>
+                    <button onclick="fntSetFormCredito5();" class="btn btn-fill btn-info">
+                        Enviar &nbsp;&nbsp; <i class="fa fa-arrow-right" aria-hidden="true"></i>
+                    </button>
+                </div>            
+            </div>
+            
+            <?php
+        }
+        
+        if( !$boolConsolidado && !empty($arrCliente["nota_rechazo"]) ){
+            ?>
+            <div class="row justify-content-center">
+                
+                <div class="col-12 ">
+                    
+                    <small class="title text-left font-weight-bold ">
+                        Nota de Rechazo:
+                    </small>
+                    <br>
+                    <small class="title text-left font-weight-bold  text-danger">
+                        <?php print $arrCliente["nota_rechazo"]?>
+                    </small>
+                    <br>
+                    <small class="title text-left font-weight-bold ">
+                        Completa los pasos y envia el formulario
+                    </small>
+                    
+                </div>
+            </div>
+            
+            <?php    
+        }
+        
+        
+        $intPaisAsesor = $this->objModel->getUsuarioPais($arrCliente["id_usuario_asesor"]);
+        $arrEstado = $this->objModel->getEstado($intPaisAsesor);
+        ?>
+        
+        <div class="row justify-content-center">
+            
+            <div class="col-12 bg-white">
+            
+                <div class="row">
+                    
+                    <div class="col-12 bg-white">
+                        <h5 class="title text-left font-weight-bold">
+                            Convenio y Pagare
+                        </h5>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+            
+        </form>
+        <script>    
+        
+            $(document).ready(function () {
+                $('.selectpicker').selectpicker(); 
+                
+                
+                <?php 
+                
+                if( isset($arrClienteDato["C_DIRECCION_COMERCIAL_CIUDAD"]) ){
+                    ?>
+                    fntDrawCiudad();
+                    <?php
+                }
+                
+                ?>
+                   
+            });
+            
+            function fntDrawCiudad(){
+                
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&drawCiudad=true&ciudad=<?php print isset($arrClienteDato["C_DIRECCION_COMERCIAL_CIUDAD"]) ? $arrClienteDato["C_DIRECCION_COMERCIAL_CIUDAD"]["valor_input"] : 0; ?>&departamento="+$("#slcC_DIRECCION_COMERCIAL_DEPARTAMENTO").val(),
+                    success: function (result) {
+
+                        $("#divFormCiudad").html(result);
+                        
+                    }
+                });    
+                
+            }
+                                              
+            function fntShowFormCredito4(intCliente){
+                
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&drawFormCredito5=true&cliente="+intCliente,
+                    success: function (result) {
+
+                        $("#divContainerPrincipal").html(result);
+                        
+                    }
+                });
+                
+                
+            }
+            
+            function fntSetFormCredito5(){
+                
+                $(".mlCargando").fadeIn();
+                var formData = new FormData(document.getElementById("frmClienteCredito1"));
+
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&setFormCredito5=true",
+                    type: "POST",
+                    data: formData,
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    dataType: "json",
+                    success: function (result) {
+                        
+                        $(".mlCargando").fadeOut();        
+                        if ( !result["error"] ) {
+
+                            md.showCustomNotification('top', 'right', "success", result["msg"]);
+                            
+                            $.ajax({
+                                url: "<?= base_url ?>cliente/&drawIndexCliente=true",
+                                success: function (result) {
+
+                                    $("#divContainerPrincipal").html(result);
+                                    
+                                }
+                            });
+                            
+                
+
+                        } else {
+                            md.showCustomNotification('top', 'right', "error", "Error");    
+                        }
+                        
+
+                    },
+                    error: function (result) {
+
+                        $(".mlCargando").fadeOut();
+                        md.showCustomNotification('top', 'right', "error", "Error");
+
+                    }
+                });
+                
+            }
+        
+        </script>
+        <?php
+        
+    }
+    
+    public function setCodigoSacAx365($intCliente){
+        
+        ?>
+        <div class="row justify-content-center">
+            
+            <div class="col-12 bg-white">
+            
+                <br>
+                <div class="row justify-content-center">
+        
+                    <div class="row">
+                                
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="bmd-label-floating">Codigo SAC AX 365</label>
+                                <input type="text" class="form-control" id="codigo365" autocomplete="off" value="" >
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-12 text-center">
+                            
+                            <button onclick="setCodigo365Cliente()" class="btn btn-fill btn-info btn-sm">
+                                Guardar
+                            </button>
+                            
+                        </div>
+                        
+                    </div>
+                    
+                </div>
+                
+                <br>
+            </div>
+        </div>
+        <script>
+            
+            function setCodigo365Cliente(){
+                
+                $(".mlCargando").fadeIn();
+                var formData = new FormData();
+                formData.append("cliente", "<?php print $intCliente;?>");
+                formData.append("codigo365", $("#codigo365").val());
+
+                $.ajax({
+                    url: "<?= base_url ?>cliente/&setCodigo365ClienteForm=true",
+                    type: "POST",
+                    data: formData,
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    dataType: "json",
+                    success: function (result) {
+                        
+                        $(".mlCargando").fadeOut();
+                        location.reload();
+
+                    },
+                    error: function (result) {
+
+                        $(".mlCargando").fadeOut();
+                        md.showCustomNotification('top', 'right', "error", "Error");
+
+                    }
+                });
+                
+                
+                    
+                
+            }
+            
+        </script>
+        <?php
+        
+    }
 
 }

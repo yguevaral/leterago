@@ -34,6 +34,8 @@ class cliente_model {
         $strQuery = "SELECT cliente.id_cliente,
                             cliente.id_usuario,
                             cliente.estado,
+                            cliente.credito,
+                            cliente.estado_credito,
                             FORMAT (cliente.fecha_creacion, 'dd/MM/yyyy, hh:mm:ss ') fecha_creacion,
                             usuario.nombres,
                             usuario.apellidos,
@@ -61,7 +63,7 @@ class cliente_model {
 
     }
     
-    function getCreditosAdmin($strFiltroPais = "", $strFiltroAsesor = "", $strFiltroEstadoCredito = ""){
+    function getCreditosAdmin($strFiltroPais = "", $strFiltroAsesor = "", $strFiltroEstadoCredito = "", $intCliente = 0 ){
         
         
         if( !empty($strFiltroPais) ){
@@ -82,10 +84,20 @@ class cliente_model {
             
         }
         
+        $strFiltroCliente = "";
+        if( intval($intCliente) ){
+            
+            $strFiltroCliente = " AND cliente.id_cliente = {$intCliente} ";
+            
+        }
+        
 
         $strQuery = "SELECT cliente.id_cliente,
                             cliente.id_usuario,
                             cliente.estado,
+                            cliente.credito,
+                            cliente.estado_credito,
+                            cliente.codigo_externo_alta_cliente,
                             FORMAT (cliente.fecha_creacion, 'dd/MM/yyyy, hh:mm:ss ') fecha_creacion,
                             usuario.nombres,
                             usuario.apellidos,
@@ -109,6 +121,7 @@ class cliente_model {
                      {$strFiltroPais}
                      {$strFiltroAsesor}
                      {$strFiltroEstadoCredito}
+                     {$strFiltroCliente}
                      ";
                      
         $qTMP = sqlsrv_query($this->db, $strQuery);
@@ -203,6 +216,9 @@ class cliente_model {
                             cliente.estado,
                             cliente.cliente_potencial,
                             cliente.nota_rechazo,
+                            cliente.credito,
+                            cliente.estado_credito,
+                            cliente.codigo_externo_alta_cliente,
                             FORMAT (cliente.fecha_creacion, 'dd/MM/yyyy, hh:mm:ss ') fecha_creacion,
                             usuario.nombres,
                             usuario.apellidos,
@@ -422,6 +438,34 @@ class cliente_model {
 
         return $arr;
 
+    }
+    
+    function setSolClienteCredito($intCliente){
+        
+        $strQuery = "UPDATE cliente
+                     SET    credito = 'Y',
+                            estado_credito = 'FEC'
+                     WHERE  id_cliente = {$intCliente} ";
+        sqlsrv_query($this->db, $strQuery);
+        
+    }
+    
+    function setUpdateClienteCreditoEstado($intCliente, $strEstadoCredito){
+        
+        $strQuery = "UPDATE cliente
+                     SET    estado_credito = '{$strEstadoCredito}'
+                     WHERE  id_cliente = {$intCliente} ";
+        sqlsrv_query($this->db, $strQuery);
+        
+    }
+    
+    function setCodigo365($intCliente, $strCodigio){
+        
+        $strQuery = "UPDATE cliente
+                     SET    codigo_externo_alta_cliente = '{$strCodigio}'
+                     WHERE  id_cliente = {$intCliente} ";
+        sqlsrv_query($this->db, $strQuery);
+        
     }
     
 }

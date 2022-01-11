@@ -346,6 +346,23 @@ class utils {
         
     }
     
+    public static function getEstadoClienteCredito(){
+        
+        $arr["FEC"]["nombre"] = "Formulario Enviado";
+        $arr["FI1"]["nombre"] = "Formulario Incompleto: Bloque 1";
+        $arr["FI2"]["nombre"] = "Formulario Incompleto: Bloque 2";
+        $arr["FI3"]["nombre"] = "Formulario Incompleto: Bloque 3";
+        $arr["FI4"]["nombre"] = "Formulario Incompleto: Bloque 4";
+        $arr["FI5"]["nombre"] = "Formulario Incompleto: Bloque 5";
+        $arr["FI6"]["nombre"] = "Formulario Incompleto: Bloque 6";
+        $arr["FPA"]["nombre"] = "Enviado, Pendiente de Aprobacion";
+        $arr["FRR"]["nombre"] = "Formulario Rechazado";
+        $arr["FCA"]["nombre"] = "Aprobado";
+        
+        return $arr;
+        
+    }
+    
     
     public static function sendEmail($strEMail, $strSubject, $strBody, $boolDebug = false, $strAddStringAttachment = "", $strAddStringAttachmentNombre = ""){
         
@@ -455,6 +472,8 @@ class utils {
     }
     
     public static function getPDFConvenioLeterago($arrSolCredito, $arrSolCreditoDato){
+        
+        return "";
         
         $arrEstadoCivil = utils::getEstadoCivil();
         $arrClaseNegocio = utils::getClaseNegocio();
@@ -1208,6 +1227,7 @@ class utils {
         //Close and output PDF document
         //$pdf->Output('example_006.pdf', 'I'); // E email
         //$pdf->Output('example_006.pdf', 'I');
+        
         return $pdf->Output('example_006.pdf', 'S');
         
     }

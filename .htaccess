@@ -1,6 +1,6 @@
 <IfModule mod_rewrite.c>
 	RewriteEngine on
-	ErrorDocument 404 http://localhost/leterago/error/
+	ErrorDocument 404 https://portalcreditosceam.azurewebsites.net/error/
 
 	RewriteCond %{SCRIPT_FILENAME} !-d
 	RewriteCond %{SCRIPT_FILENAME} !-f

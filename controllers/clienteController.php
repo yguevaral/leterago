@@ -864,7 +864,7 @@ class clienteController {
                                 
                             </table>';
                             
-                utils::sendEmail("idroys4@gmail.com", "Solicitud de Credito #".$intSolCredito.", Datos Enviados", $strBody, false);
+                utils::sendEmail("idroys4@gmail.com", "Alta de Cliente #".$intSolCredito.", Datos Enviados", $strBody, false);
                                 
                 $arr["error"] = false;    
                 $arr["msg"] = "Formulario enviado correctamente, pronto tendras respuesta via email ( {$arrSolCredito["email"]} )";
@@ -936,10 +936,10 @@ class clienteController {
                             
                         </table>';
                         
-            utils::sendEmail("idroys4@gmail.com", "Solicitud de Credito #".$intSolCredito.", Rechazada", $strBody, false);
+            utils::sendEmail("idroys4@gmail.com", "Alta de Cliente #".$intSolCredito.", Rechazada", $strBody, false);
                             
             $arr["error"] = false;    
-            $arr["msg"] = "Solicitud de credito Rechazada";
+            $arr["msg"] = "Alta de Cliente Rechazada";
             
             print json_encode($arr);    
             die();
@@ -1001,15 +1001,756 @@ class clienteController {
             
             
                         
-            utils::sendEmail("idroys4@gmail.com", "Solicitud de Credito #".$intSolCredito.", Aprobada", $strBody, false, $strPDFConvenio, 'credito-'.$intSolCredito.'.pdf');
+            utils::sendEmail("idroys4@gmail.com", "Alta de Cliente #".$intSolCredito.", Aprobada", $strBody, false, $strPDFConvenio, 'credito-'.$intSolCredito.'.pdf');
                             
             $arr["error"] = false;    
-            $arr["msg"] = "Solicitud de credito Aprobado, documento enviado";
+            $arr["msg"] = "Alta de Cliente Aprobado, documento enviado";
             
             print json_encode($arr);    
             die();
         }
+        
+        if( isset($_GET["setCreditoAprobacionCredito"]) ){
             
+            $intSolCredito = isset($_POST["hidSolCredito"]) ? intval($_POST["hidSolCredito"]) : 0;
+            
+            $this->objModel->setUpdateClienteCreditoEstado($intSolCredito, "FCA");
+            $this->objModel->setUpdateSolCreditoEstadoNotaRechazo($intSolCredito, "");
+            
+            $arrSolCredito = $this->objModel->getSolCreditoClienteKey($intSolCredito);
+            $arrSolCreditoDato = $this->objModel->getClienteDato($intSolCredito); 
+            
+            $arrSolCredito = $arrSolCredito[$intSolCredito];
+            
+            $strBody = '<table style="width: 30%; border: 1px solid black;">
+                            <tr>
+                                <td nowrap style="width: 50%; text-align: left; font-weight: bold; border: 1px solid black;">
+                                    Cliente
+                                </td>
+                                <td nowrap style="width: 50%; text-align: center; border: 1px solid black;">
+                                    '.$arrSolCredito["nombres"].' '.$arrSolCredito["apellidos"].'
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <td nowrap style="width: 50%; text-align: left; font-weight: bold; border: 1px solid black; ">
+                                    # Credito
+                                </td>
+                                <td nowrap style="width: 50%; text-align: center; border: 1px solid black;">
+                                    '.$intSolCredito.'
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <td nowrap colspan="2" style="text-align: center; font-weight: bold; ">
+                                    Navega a <a href="http://leterago.com/" target="_blank">leterago.com</a> para ver los datos ingresados en el Formulario de Credito
+                                </td>
+                            </tr>
+                            
+                        </table>';
+            
+            
+            /*********************************************************/
+            /*********************************************************/
+            /*********************************************************/
+            /*********************************************************/
+            /*********************************************************/
+            $strPDFConvenio = utils::getPDFConvenioLeterago($arrSolCredito, $arrSolCreditoDato);
+
+            /*********************************************************/
+            /*********************************************************/
+            /*********************************************************/
+            /*********************************************************/
+            /*********************************************************/
+            /*********************************************************/
+            
+            
+                        
+            utils::sendEmail("idroys4@gmail.com", "Solicitud Credito, Cliente #".$intSolCredito.", Aprobada", $strBody, false, $strPDFConvenio, 'credito-'.$intSolCredito.'.pdf');
+                            
+            $arr["error"] = false;    
+            $arr["msg"] = "Credito Aprobado, documento enviado";
+            
+            print json_encode($arr);    
+            die();
+        }
+        
+        if( isset($_GET["setEnviarFormularioCredito"]) ){
+            
+            $intCliente = isset($_GET["cliente"]) ? intval($_GET["cliente"]) : 0;
+            
+            $arrCreditos = $this->objModel->getCreditosAdmin("", "", "", $intCliente );
+            $this->objModel->setSolClienteCredito($intCliente);
+            $arrCreditos = $arrCreditos[$intCliente];
+            
+            $strBody = '<table style="width: 30%; border: 1px solid black;">
+                            <tr>
+                                <td nowrap style="width: 50%; text-align: left; font-weight: bold; border: 1px solid black;">
+                                    Cliente
+                                </td>
+                                <td nowrap style="width: 50%; text-align: center; border: 1px solid black;">
+                                    '.$arrCreditos["nombre_empresa"].'
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <td nowrap style="width: 50%; text-align: left; font-weight: bold; border: 1px solid black; ">
+                                    # Credito
+                                </td>
+                                <td nowrap style="width: 50%; text-align: center; border: 1px solid black;">
+                                    Completa el formulario 03-F04 para solicitar tu credito
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <td nowrap colspan="2" style="text-align: center; font-weight: bold; ">
+                                    Navega a <a href="http://leterago.com/" target="_blank">leterago.com</a> para ver los datos ingresados en el Formulario de Credito
+                                </td>
+                            </tr>
+                            
+                        </table>';
+              
+            
+            utils::sendEmail("idroys4@gmail.com", "Cliente #".$intCliente.", solicitud de credito", $strBody, false);
+            
+            die();
+        }
+        
+        if( isset($_GET["drawFormCredito1"]) ){
+            
+            $intCliente = isset($_GET["cliente"]) ? intval($_GET["cliente"]) : 0;
+            $arrSolCredito = $this->objModel->getCliente($_SESSION['leterago']['id'], $intCliente);
+            
+            $arrSolCreditoDato = $this->objModel->getClienteDato($intCliente);    
+            $this->objView->drawFormCredito1($intCliente, ( isset($arrSolCredito[$intCliente]) ? $arrSolCredito[$intCliente] : array() ), $arrSolCreditoDato);
+            
+            die();
+        }
+        
+        if( isset($_GET["setFormCredito1"]) ){
+            
+            $intCliente = isset($_POST["hidCliente"]) ? intval($_POST["hidCliente"]) : 0;
+            
+            $strRazonSocial = isset($_POST["txtC_RAZON_SOCIAL"]) ? utils::getStringQuery($_POST["txtC_RAZON_SOCIAL"]) : "";
+            $intRazonSocial = isset($_POST["hidC_RAZON_SOCIAL"]) ? intval($_POST["hidC_RAZON_SOCIAL"]) : 0;
+            
+            if( $intRazonSocial )
+                $this->objModel->setUpdateSolCreditoDato($intRazonSocial, $strRazonSocial);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_RAZON_SOCIAL", $strRazonSocial, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strRazonSocialAntiguedad = isset($_POST["txtC_RAZON_SOCIAL_ACTIGUEDAD"]) ? utils::getStringQuery($_POST["txtC_RAZON_SOCIAL_ACTIGUEDAD"]) : "";
+            $intRazonSocialAntiguedad = isset($_POST["hidC_RAZON_SOCIAL_ACTIGUEDAD"]) ? intval($_POST["hidC_RAZON_SOCIAL_ACTIGUEDAD"]) : 0;
+            
+            if( $intRazonSocialAntiguedad )
+                $this->objModel->setUpdateSolCreditoDato($intRazonSocialAntiguedad, $strRazonSocialAntiguedad);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_RAZON_SOCIAL_ACTIGUEDAD", $strRazonSocialAntiguedad, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strNombreComercial = isset($_POST["txtC_NOMBRE_COMERCIAL"]) ? utils::getStringQuery($_POST["txtC_NOMBRE_COMERCIAL"]) : "";
+            $intNombreComercial = isset($_POST["hidC_NOMBRE_COMERCIAL"]) ? intval($_POST["hidC_NOMBRE_COMERCIAL"]) : 0;
+            
+            if( $intNombreComercial )
+                $this->objModel->setUpdateSolCreditoDato($intNombreComercial, $strNombreComercial);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_NOMBRE_COMERCIAL", $strNombreComercial, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strNumRegistroTributario = isset($_POST["txtC_NUM_REGISTRO_TRIBUTARIO"]) ? utils::getStringQuery($_POST["txtC_NUM_REGISTRO_TRIBUTARIO"]) : "";
+            $intNumRegistroTributario = isset($_POST["hidC_NUM_REGISTRO_TRIBUTARIO"]) ? intval($_POST["hidC_NUM_REGISTRO_TRIBUTARIO"]) : 0;
+            
+            if( $intNumRegistroTributario )
+                $this->objModel->setUpdateSolCreditoDato($intNumRegistroTributario, $strNumRegistroTributario);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_NUM_REGISTRO_TRIBUTARIO", $strNumRegistroTributario, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strNumRegistroTributarioActividad = isset($_POST["txtC_NUM_REGISTRO_TRIBUTARIO_ACTIVIDAD"]) ? utils::getStringQuery($_POST["txtC_NUM_REGISTRO_TRIBUTARIO_ACTIVIDAD"]) : "";
+            $intNumRegistroTributarioActividad = isset($_POST["hidC_NUM_REGISTRO_TRIBUTARIO_ACTIVIDAD"]) ? intval($_POST["hidC_NUM_REGISTRO_TRIBUTARIO_ACTIVIDAD"]) : 0;
+            
+            if( $intNumRegistroTributarioActividad )
+                $this->objModel->setUpdateSolCreditoDato($intNumRegistroTributarioActividad, $strNumRegistroTributarioActividad);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_NUM_REGISTRO_TRIBUTARIO_ACTIVIDAD", $strNumRegistroTributarioActividad, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strDireccionComercial = isset($_POST["txtC_DIRECCION_COMERCIAL"]) ? utils::getStringQuery($_POST["txtC_DIRECCION_COMERCIAL"]) : "";
+            $intDireccionComercial = isset($_POST["hidC_DIRECCION_COMERCIAL"]) ? intval($_POST["hidC_DIRECCION_COMERCIAL"]) : 0;
+            
+            if( $intDireccionComercial )
+                $this->objModel->setUpdateSolCreditoDato($intDireccionComercial, $strDireccionComercial);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_DIRECCION_COMERCIAL", $strDireccionComercial, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strDireccionComercialDepartamento = isset($_POST["slcC_DIRECCION_COMERCIAL_DEPARTAMENTO"]) ? utils::getStringQuery($_POST["slcC_DIRECCION_COMERCIAL_DEPARTAMENTO"]) : "";
+            $intDireccionComercialDepartamento = isset($_POST["hidC_DIRECCION_COMERCIAL_DEPARTAMENTO"]) ? intval($_POST["hidC_DIRECCION_COMERCIAL_DEPARTAMENTO"]) : 0;
+            
+            if( $intDireccionComercialDepartamento )
+                $this->objModel->setUpdateSolCreditoDato($intDireccionComercialDepartamento, $strDireccionComercialDepartamento);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_DIRECCION_COMERCIAL_DEPARTAMENTO", $strDireccionComercialDepartamento, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strDireccionComercialCiudad = isset($_POST["slcC_DIRECCION_COMERCIAL_CIUDAD"]) ? utils::getStringQuery($_POST["slcC_DIRECCION_COMERCIAL_CIUDAD"]) : "";
+            $intDireccionComercialCiudad = isset($_POST["hidC_DIRECCION_COMERCIAL_CIUDAD"]) ? intval($_POST["hidC_DIRECCION_COMERCIAL_CIUDAD"]) : 0;
+            
+            if( $intDireccionComercialCiudad )
+                $this->objModel->setUpdateSolCreditoDato($intDireccionComercialCiudad, $strDireccionComercialCiudad);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_DIRECCION_COMERCIAL_CIUDAD", $strDireccionComercialCiudad, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strClaseContribuyente = isset($_POST["txtC_CLASE_CONTRIBUYENTE"]) ? utils::getStringQuery($_POST["txtC_CLASE_CONTRIBUYENTE"]) : "";
+            $intClaseContribuyente = isset($_POST["hidC_CLASE_CONTRIBUYENTE"]) ? intval($_POST["hidC_CLASE_CONTRIBUYENTE"]) : 0;
+            
+            if( $intClaseContribuyente )
+                $this->objModel->setUpdateSolCreditoDato($intClaseContribuyente, $strClaseContribuyente);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_CLASE_CONTRIBUYENTE", $strClaseContribuyente, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strLocal = isset($_POST["rdC_LOCAL"]) ? utils::getStringQuery($_POST["rdC_LOCAL"]) : "";
+            $intLocal = isset($_POST["hidC_LOCAL"]) ? intval($_POST["hidC_LOCAL"]) : 0;
+            
+            if( $intLocal )
+                $this->objModel->setUpdateSolCreditoDato($intLocal, $strLocal);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_LOCAL", $strLocal, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strNit = isset($_POST["txtC_NIT"]) ? utils::getStringQuery($_POST["txtC_NIT"]) : "";
+            $intNit = isset($_POST["hidC_NIT"]) ? intval($_POST["hidC_NIT"]) : 0;
+            
+            if( $intNit )
+                $this->objModel->setUpdateSolCreditoDato($intNit, $strNit);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_NIT", $strNit, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strTelefonoCelular = isset($_POST["txtC_TELEFONO_CELULAR"]) ? utils::getStringQuery($_POST["txtC_TELEFONO_CELULAR"]) : "";
+            $intTelefonoCelular = isset($_POST["hidC_TELEFONO_CELULAR"]) ? intval($_POST["hidC_TELEFONO_CELULAR"]) : 0;
+            
+            if( $intTelefonoCelular )
+                $this->objModel->setUpdateSolCreditoDato($intTelefonoCelular, $strTelefonoCelular);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_TELEFONO_CELULAR", $strTelefonoCelular, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strEmail = isset($_POST["txtC_EMAIL"]) ? utils::getStringQuery($_POST["txtC_EMAIL"]) : "";
+            $intEmail = isset($_POST["hidC_EMAIL"]) ? intval($_POST["hidC_EMAIL"]) : 0;
+            
+            if( $intEmail )
+                $this->objModel->setUpdateSolCreditoDato($intEmail, $strEmail);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_EMAIL", $strEmail, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            
+            
+                                    
+            $this->objModel->setUpdateClienteCreditoEstado($intCliente, "FI1");                
+            
+            $arr["error"] = false;    
+            $arr["msg"] = "Datos Bloque 1 Guardados Correctamente";
+            
+            print json_encode($arr);    
+            die();
+            
+        }
+        
+        if( isset($_GET["drawFormCredito2"]) ){
+            
+            $intCliente = isset($_GET["cliente"]) ? intval($_GET["cliente"]) : 0;
+            $arrSolCredito = $this->objModel->getCliente($_SESSION['leterago']['id'], $intCliente);
+            
+            $arrSolCreditoDato = $this->objModel->getClienteDato($intCliente);    
+            $this->objView->drawFormCredito2($intCliente, ( isset($arrSolCredito[$intCliente]) ? $arrSolCredito[$intCliente] : array() ), $arrSolCreditoDato);
+            
+            die();
+        }
+        
+        if( isset($_GET["setFormCredito2"]) ){
+            
+            $intCliente = isset($_POST["hidCliente"]) ? intval($_POST["hidCliente"]) : 0;
+            
+            $strNombrePropietario = isset($_POST["txtC_NOMBRE_PROPIETARIO"]) ? utils::getStringQuery($_POST["txtC_NOMBRE_PROPIETARIO"]) : "";
+            $intNombrePropietario = isset($_POST["hidC_NOMBRE_PROPIETARIO"]) ? intval($_POST["hidC_NOMBRE_PROPIETARIO"]) : 0;
+            
+            if( $intNombrePropietario )
+                $this->objModel->setUpdateSolCreditoDato($intNombrePropietario, $strNombrePropietario);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_NOMBRE_PROPIETARIO", $strNombrePropietario, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strNombrePropietarioNacionalidad = isset($_POST["txtC_NOMBRE_PROPIETARIO_NACIONALIDAD"]) ? utils::getStringQuery($_POST["txtC_NOMBRE_PROPIETARIO_NACIONALIDAD"]) : "";
+            $intNombrePropietarioNacionalidad = isset($_POST["hidC_NOMBRE_PROPIETARIO_NACIONALIDAD"]) ? intval($_POST["hidC_NOMBRE_PROPIETARIO_NACIONALIDAD"]) : 0;
+            
+            if( $intNombrePropietarioNacionalidad )
+                $this->objModel->setUpdateSolCreditoDato($intNombrePropietarioNacionalidad, $strNombrePropietarioNacionalidad);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_NOMBRE_PROPIETARIO_NACIONALIDAD", $strNombrePropietarioNacionalidad, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////                   
+            
+            $strNumeroCedula = isset($_POST["txtC_NUMERO_CEDULA"]) ? utils::getStringQuery($_POST["txtC_NUMERO_CEDULA"]) : "";
+            $intNumeroCedula = isset($_POST["hidC_NUMERO_CEDULA"]) ? intval($_POST["hidC_NUMERO_CEDULA"]) : 0;
+            
+            if( $intNumeroCedula )
+                $this->objModel->setUpdateSolCreditoDato($intNumeroCedula, $strNumeroCedula);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_NUMERO_CEDULA", $strNumeroCedula, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////                   
+            
+            $strEmail = isset($_POST["txtC_PEMAIL"]) ? utils::getStringQuery($_POST["txtC_PEMAIL"]) : "";
+            $intEmail = isset($_POST["hidC_PEMAIL"]) ? intval($_POST["hidC_PEMAIL"]) : 0;
+            
+            if( $intEmail )
+                $this->objModel->setUpdateSolCreditoDato($intEmail, $strEmail);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_PEMAIL", $strEmail, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////                   
+            
+            $strPDepartamento = isset($_POST["slcC_PDEPARTAMENTO"]) ? utils::getStringQuery($_POST["slcC_PDEPARTAMENTO"]) : "";
+            $intPDepartamento = isset($_POST["hidC_PDEPARTAMENTO"]) ? intval($_POST["hidC_PDEPARTAMENTO"]) : 0;
+            
+            if( $intPDepartamento )
+                $this->objModel->setUpdateSolCreditoDato($intPDepartamento, $strPDepartamento);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_PDEPARTAMENTO", $strPDepartamento, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////                   
+            
+            $strPCiudad = isset($_POST["slcC_PCIUDAD"]) ? utils::getStringQuery($_POST["slcC_PCIUDAD"]) : "";
+            $intPCiudad = isset($_POST["hidC_PCIUDAD"]) ? intval($_POST["hidC_PCIUDAD"]) : 0;
+            
+            if( $intPCiudad )
+                $this->objModel->setUpdateSolCreditoDato($intPCiudad, $strPCiudad);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_PCIUDAD", $strPCiudad, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////                   
+            
+            $strPDireccionDomicilio = isset($_POST["txtC_PDIRECCION_DOMICILIO"]) ? utils::getStringQuery($_POST["txtC_PDIRECCION_DOMICILIO"]) : "";
+            $intPDireccionDomicilio = isset($_POST["hidC_PDIRECCION_DOMICILIO"]) ? intval($_POST["hidC_PDIRECCION_DOMICILIO"]) : 0;
+            
+            if( $intPDireccionDomicilio )
+                $this->objModel->setUpdateSolCreditoDato($intPDireccionDomicilio, $strPDireccionDomicilio);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_PDIRECCION_DOMICILIO", $strPDireccionDomicilio, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////                   
+            
+            $strPCelular = isset($_POST["txtC_PCELULAR"]) ? utils::getStringQuery($_POST["txtC_PCELULAR"]) : "";
+            $intPCelular = isset($_POST["hidC_PCELULAR"]) ? intval($_POST["hidC_PCELULAR"]) : 0;
+            
+            if( $intPCelular )
+                $this->objModel->setUpdateSolCreditoDato($intPCelular, $strPCelular);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_PCELULAR", $strPCelular, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////                   
+            
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////                   
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////                   
+            
+            $strRLNombrePropietario = isset($_POST["txtC_RLNOMBRE_PROPIETARIO"]) ? utils::getStringQuery($_POST["txtC_RLNOMBRE_PROPIETARIO"]) : "";
+            $intRLNombrePropietario = isset($_POST["hidC_RLNOMBRE_PROPIETARIO"]) ? intval($_POST["hidC_RLNOMBRE_PROPIETARIO"]) : 0;
+            
+            if( $intRLNombrePropietario )
+                $this->objModel->setUpdateSolCreditoDato($intRLNombrePropietario, $strRLNombrePropietario);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_RLNOMBRE_PROPIETARIO", $strRLNombrePropietario, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////                   
+            
+            $strRLNombrePropietarioNacionalidad = isset($_POST["txtC_RLNOMBRE_PROPIETARIO_NACIONALIDAD"]) ? utils::getStringQuery($_POST["txtC_RLNOMBRE_PROPIETARIO_NACIONALIDAD"]) : "";
+            $intRLNombrePropietarioNacionalidad = isset($_POST["hidC_RLNOMBRE_PROPIETARIO_NACIONALIDAD"]) ? intval($_POST["hidC_RLNOMBRE_PROPIETARIO_NACIONALIDAD"]) : 0;
+            
+            if( $intRLNombrePropietarioNacionalidad )
+                $this->objModel->setUpdateSolCreditoDato($intRLNombrePropietarioNacionalidad, $strRLNombrePropietarioNacionalidad);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_RLNOMBRE_PROPIETARIO_NACIONALIDAD", $strRLNombrePropietarioNacionalidad, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////                   
+            
+            $strRLNumeroCedula = isset($_POST["txtC_RLNUMERO_CEDULA"]) ? utils::getStringQuery($_POST["txtC_RLNUMERO_CEDULA"]) : "";
+            $intRLNumeroCedula = isset($_POST["hidC_RLNUMERO_CEDULA"]) ? intval($_POST["hidC_RLNUMERO_CEDULA"]) : 0;
+            
+            if( $intRLNumeroCedula )
+                $this->objModel->setUpdateSolCreditoDato($intRLNumeroCedula, $strRLNumeroCedula);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_RLNUMERO_CEDULA", $strRLNumeroCedula, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////                   
+            
+            $strRLEmail = isset($_POST["txtC_RLPEMAIL"]) ? utils::getStringQuery($_POST["txtC_RLPEMAIL"]) : "";
+            $intRLEmail = isset($_POST["hidC_RLPEMAIL"]) ? intval($_POST["hidC_RLPEMAIL"]) : 0;
+            
+            if( $intRLEmail )
+                $this->objModel->setUpdateSolCreditoDato($intRLEmail, $strRLEmail);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_RLPEMAIL", $strRLEmail, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////                   
+            
+            $strRLDepartamento = isset($_POST["slcC_RLPDEPARTAMENTO"]) ? utils::getStringQuery($_POST["slcC_RLPDEPARTAMENTO"]) : "";
+            $intRLDepartamento = isset($_POST["hidC_RLPDEPARTAMENTO"]) ? intval($_POST["hidC_RLPDEPARTAMENTO"]) : 0;
+            
+            if( $intRLDepartamento )
+                $this->objModel->setUpdateSolCreditoDato($intRLDepartamento, $strRLDepartamento);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_RLPDEPARTAMENTO", $strRLDepartamento, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////                   
+            
+            $strRLCiudad = isset($_POST["slcC_RLPCIUDAD"]) ? utils::getStringQuery($_POST["slcC_RLPCIUDAD"]) : "";
+            $intRLCiudad = isset($_POST["hidC_RLPCIUDAD"]) ? intval($_POST["hidC_RLPCIUDAD"]) : 0;
+            
+            if( $intRLCiudad )
+                $this->objModel->setUpdateSolCreditoDato($intRLCiudad, $strRLCiudad);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_RLPCIUDAD", $strRLCiudad, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////                   
+            
+            $strRLDireccionDomicilio = isset($_POST["txtC_RLPDIRECCION_DOMICILIO"]) ? utils::getStringQuery($_POST["txtC_RLPDIRECCION_DOMICILIO"]) : "";
+            $intRLDireccionDomicilio = isset($_POST["hidC_RLPDIRECCION_DOMICILIO"]) ? intval($_POST["hidC_RLPDIRECCION_DOMICILIO"]) : 0;
+            
+            if( $intRLDireccionDomicilio )
+                $this->objModel->setUpdateSolCreditoDato($intRLDireccionDomicilio, $strRLDireccionDomicilio);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_RLPDIRECCION_DOMICILIO", $strRLDireccionDomicilio, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////                   
+            
+            $strRLPCelular = isset($_POST["txtC_RLPCELULAR"]) ? utils::getStringQuery($_POST["txtC_RLPCELULAR"]) : "";
+            $intRLPCelular = isset($_POST["hidC_RLPCELULAR"]) ? intval($_POST["hidC_RLPCELULAR"]) : 0;
+            
+            if( $intRLPCelular )
+                $this->objModel->setUpdateSolCreditoDato($intRLPCelular, $strRLPCelular);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_RLPCELULAR", $strRLPCelular, 1);                
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////                   
+            
+            
+            
+            
+                                    
+            $this->objModel->setUpdateClienteCreditoEstado($intCliente, "FI1");                
+            
+            $arr["error"] = false;    
+            $arr["msg"] = "Datos Bloque 1 Guardados Correctamente";
+            
+            print json_encode($arr);    
+            die();
+            
+        }
+        
+        if( isset($_GET["drawFormCredito3"]) ){
+            
+            $intCliente = isset($_GET["cliente"]) ? intval($_GET["cliente"]) : 0;
+            $arrSolCredito = $this->objModel->getCliente($_SESSION['leterago']['id'], $intCliente);
+            
+            $arrSolCreditoDato = $this->objModel->getClienteDato($intCliente);    
+            $this->objView->drawFormCredito3($intCliente, ( isset($arrSolCredito[$intCliente]) ? $arrSolCredito[$intCliente] : array() ), $arrSolCreditoDato);
+            
+            die();
+        }
+        
+        if( isset($_GET["setFormCredito3"]) ){
+            
+            $intCliente = isset($_POST["hidCliente"]) ? intval($_POST["hidCliente"]) : 0;
+            
+            $strEncargadoPagos = isset($_POST["txtC_ENCARGADO_PAGOS"]) ? utils::getStringQuery($_POST["txtC_ENCARGADO_PAGOS"]) : "";
+            $intEncargadoPagos = isset($_POST["hidC_ENCARGADO_PAGOS"]) ? intval($_POST["hidC_ENCARGADO_PAGOS"]) : 0;
+            
+            if( $intEncargadoPagos )
+                $this->objModel->setUpdateSolCreditoDato($intEncargadoPagos, $strEncargadoPagos);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_ENCARGADO_PAGOS", $strEncargadoPagos, 3);
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strEncargadoPagosEmail = isset($_POST["txtC_ENCARGADO_PAGOS_EMAIL"]) ? utils::getStringQuery($_POST["txtC_ENCARGADO_PAGOS_EMAIL"]) : "";
+            $intEncargadoPagosEmail = isset($_POST["txtC_ENCARGADO_PAGOS_EMAIL"]) ? intval($_POST["txtC_ENCARGADO_PAGOS_EMAIL"]) : 0;
+            
+            if( $intEncargadoPagosEmail )
+                $this->objModel->setUpdateSolCreditoDato($intEncargadoPagosEmail, $strEncargadoPagosEmail);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_ENCARGADO_PAGOS_EMAIL", $strEncargadoPagosEmail, 3);
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strEncargadoCompras = isset($_POST["txtC_ENCARGADO_COMPRAS"]) ? utils::getStringQuery($_POST["txtC_ENCARGADO_COMPRAS"]) : "";
+            $intEncargadoCompras = isset($_POST["hidC_ENCARGADO_COMPRAS"]) ? intval($_POST["hidC_ENCARGADO_COMPRAS"]) : 0;
+            
+            if( $intEncargadoCompras )
+                $this->objModel->setUpdateSolCreditoDato($intEncargadoCompras, $strEncargadoCompras);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_ENCARGADO_COMPRAS", $strEncargadoCompras, 3);
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strEncargadoComprasEmail = isset($_POST["txtC_ENCARGADO_COMPRAS_EMAIL"]) ? utils::getStringQuery($_POST["txtC_ENCARGADO_COMPRAS_EMAIL"]) : "";
+            $intEncargadoComprasEmail = isset($_POST["hidC_ENCARGADO_COMPRAS_EMAIL"]) ? intval($_POST["hidC_ENCARGADO_COMPRAS_EMAIL"]) : 0;
+            
+            if( $intEncargadoComprasEmail )
+                $this->objModel->setUpdateSolCreditoDato($intEncargadoComprasEmail, $strEncargadoComprasEmail);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_ENCARGADO_COMPRAS_EMAIL", $strEncargadoComprasEmail, 3);
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strFormaPago = isset($_POST["rdC_FORMA_PAGO"]) ? utils::getStringQuery($_POST["rdC_FORMA_PAGO"]) : "";
+            $intFormaPago = isset($_POST["hidC_FORMA_PAGO"]) ? intval($_POST["hidC_FORMA_PAGO"]) : 0;
+            
+            if( $intFormaPago )
+                $this->objModel->setUpdateSolCreditoDato($intFormaPago, $strFormaPago);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_FORMA_PAGO", $strFormaPago, 3);
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strMontoSolicitado = isset($_POST["txtC_MONTO_SOLICITADO"]) ? utils::getStringQuery($_POST["txtC_MONTO_SOLICITADO"]) : "";
+            $intMontoSolicitado = isset($_POST["hidC_MONTO_SOLICITADO"]) ? intval($_POST["hidC_MONTO_SOLICITADO"]) : 0;
+            
+            if( $intMontoSolicitado )
+                $this->objModel->setUpdateSolCreditoDato($intMontoSolicitado, $strMontoSolicitado);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_MONTO_SOLICITADO", $strMontoSolicitado, 3);
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strMontoLimite = isset($_POST["txtC_MONTO_LIMITE_APROBADO"]) ? utils::getStringQuery($_POST["txtC_MONTO_LIMITE_APROBADO"]) : "";
+            $intMontoLimite = isset($_POST["hidC_MONTO_LIMITE_APROBADO"]) ? intval($_POST["hidC_MONTO_LIMITE_APROBADO"]) : 0;
+            
+            if( $intMontoLimite )
+                $this->objModel->setUpdateSolCreditoDato($intMontoLimite, $strMontoLimite);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_MONTO_LIMITE_APROBADO", $strMontoLimite, 3);
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+            
+            
+            
+                                    
+            $this->objModel->setUpdateClienteCreditoEstado($intCliente, "FI1");                
+            
+            $arr["error"] = false;    
+            $arr["msg"] = "Datos Bloque 1 Guardados Correctamente";
+            
+            print json_encode($arr);    
+            die();
+            
+        }
+    
+        if( isset($_GET["drawFormCredito4"]) ){
+            
+            $intCliente = isset($_GET["cliente"]) ? intval($_GET["cliente"]) : 0;
+            $arrSolCredito = $this->objModel->getCliente($_SESSION['leterago']['id'], $intCliente);
+            
+            $arrSolCreditoDato = $this->objModel->getClienteDato($intCliente);    
+            $this->objView->drawFormCredito4($intCliente, ( isset($arrSolCredito[$intCliente]) ? $arrSolCredito[$intCliente] : array() ), $arrSolCreditoDato);
+            
+            die();
+        }
+        
+        if( isset($_GET["setFormCredito4"]) ){
+            
+            $intCliente = isset($_POST["hidCliente"]) ? intval($_POST["hidCliente"]) : 0;
+            
+            
+            for( $i = 1; $i <= 3; $i++ ){
+                
+                $strEncargadoPagos = isset($_POST["txtC_REFERENCIA_NOMBRE_EMPRESA_{$i}"]) ? utils::getStringQuery($_POST["txtC_REFERENCIA_NOMBRE_EMPRESA_{$i}"]) : "";
+                $intEncargadoPagos = isset($_POST["hidC_REFERENCIA_NOMBRE_EMPRESA_{$i}"]) ? intval($_POST["hidC_REFERENCIA_NOMBRE_EMPRESA_{$i}"]) : 0;
+                
+                if( $intEncargadoPagos )
+                    $this->objModel->setUpdateSolCreditoDato($intEncargadoPagos, $strEncargadoPagos);                
+                else
+                    $this->objModel->setInsertSolCreditoDato($intCliente, "C_REFERENCIA_NOMBRE_EMPRESA_{$i}", $strEncargadoPagos, 3);
+                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                
+                $strEncargadoPagos = isset($_POST["txtC_REFERENCIA_DESDE_COMPRA_EMPRESA_{$i}"]) ? utils::getStringQuery($_POST["txtC_REFERENCIA_DESDE_COMPRA_EMPRESA_{$i}"]) : "";
+                $intEncargadoPagos = isset($_POST["hidC_REFERENCIA_DESDE_COMPRA_EMPRESA_{$i}"]) ? intval($_POST["hidC_REFERENCIA_DESDE_COMPRA_EMPRESA_{$i}"]) : 0;
+                
+                if( $intEncargadoPagos )
+                    $this->objModel->setUpdateSolCreditoDato($intEncargadoPagos, $strEncargadoPagos);                
+                else
+                    $this->objModel->setInsertSolCreditoDato($intCliente, "C_REFERENCIA_DESDE_COMPRA_EMPRESA_{$i}", $strEncargadoPagos, 3);
+                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                
+                
+                $strEncargadoPagos = isset($_POST["txtC_REFERENCIA_TELEFONO_EMPRESA_{$i}"]) ? utils::getStringQuery($_POST["txtC_REFERENCIA_TELEFONO_EMPRESA_{$i}"]) : "";
+                $intEncargadoPagos = isset($_POST["hidC_REFERENCIA_TELEFONO_EMPRESA_{$i}"]) ? intval($_POST["hidC_REFERENCIA_TELEFONO_EMPRESA_{$i}"]) : 0;
+                
+                if( $intEncargadoPagos )
+                    $this->objModel->setUpdateSolCreditoDato($intEncargadoPagos, $strEncargadoPagos);                
+                else
+                    $this->objModel->setInsertSolCreditoDato($intCliente, "C_REFERENCIA_TELEFONO_EMPRESA_{$i}", $strEncargadoPagos, 3);
+                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                
+                $strEncargadoPagos = isset($_POST["txtC_REFERENCIA_LIMITE_CREDITO_EMPRESA_{$i}"]) ? utils::getStringQuery($_POST["txtC_REFERENCIA_LIMITE_CREDITO_EMPRESA_{$i}"]) : "";
+                $intEncargadoPagos = isset($_POST["hidC_REFERENCIA_LIMITE_CREDITO_EMPRESA_{$i}"]) ? intval($_POST["hidC_REFERENCIA_LIMITE_CREDITO_EMPRESA_{$i}"]) : 0;
+                
+                if( $intEncargadoPagos )
+                    $this->objModel->setUpdateSolCreditoDato($intEncargadoPagos, $strEncargadoPagos);                
+                else
+                    $this->objModel->setInsertSolCreditoDato($intCliente, "C_REFERENCIA_LIMITE_CREDITO_EMPRESA_{$i}", $strEncargadoPagos, 3);
+                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                
+                $strEncargadoPagos = isset($_POST["txtC_REFERENCIA_CUANTO_COMPRA_EMPRESA_{$i}"]) ? utils::getStringQuery($_POST["txtC_REFERENCIA_CUANTO_COMPRA_EMPRESA_{$i}"]) : "";
+                $intEncargadoPagos = isset($_POST["hidC_REFERENCIA_CUANTO_COMPRA_EMPRESA_{$i}"]) ? intval($_POST["hidC_REFERENCIA_CUANTO_COMPRA_EMPRESA_{$i}"]) : 0;
+                
+                if( $intEncargadoPagos )
+                    $this->objModel->setUpdateSolCreditoDato($intEncargadoPagos, $strEncargadoPagos);                
+                else
+                    $this->objModel->setInsertSolCreditoDato($intCliente, "C_REFERENCIA_CUANTO_COMPRA_EMPRESA_{$i}", $strEncargadoPagos, 3);
+                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                
+                
+            }
+            
+            $strValor = isset($_POST["txtC_BANCO_NOMBRE"]) ? utils::getStringQuery($_POST["txtC_BANCO_NOMBRE"]) : "";
+            $intKey = isset($_POST["hidC_BANCO_NOMBRE"]) ? intval($_POST["hidC_BANCO_NOMBRE"]) : 0;
+            
+            if( $intKey )
+                $this->objModel->setUpdateSolCreditoDato($intKey, $strValor);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, "C_BANCO_NOMBRE", $strValor, 3);
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strLlave = "C_BANCO_TIPO_CUENTA";
+            $strValor = isset($_POST["txt{$strLlave}"]) ? utils::getStringQuery($_POST["txt{$strLlave}"]) : "";
+            $intKey = isset($_POST["hid{$strLlave}"]) ? intval($_POST["hid{$strLlave}"]) : 0;
+            
+            if( $intKey )
+                $this->objModel->setUpdateSolCreditoDato($intKey, $strValor);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, $strLlave, $strValor, 3);
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strLlave = "C_BANCO_NUMERO_CUENTA";
+            $strValor = isset($_POST["txt{$strLlave}"]) ? utils::getStringQuery($_POST["txt{$strLlave}"]) : "";
+            $intKey = isset($_POST["hid{$strLlave}"]) ? intval($_POST["hid{$strLlave}"]) : 0;
+            
+            if( $intKey )
+                $this->objModel->setUpdateSolCreditoDato($intKey, $strValor);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, $strLlave, $strValor, 3);
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strLlave = "C_BANCO_ENCARGADO_CUENTA";
+            $strValor = isset($_POST["txt{$strLlave}"]) ? utils::getStringQuery($_POST["txt{$strLlave}"]) : "";
+            $intKey = isset($_POST["hid{$strLlave}"]) ? intval($_POST["hid{$strLlave}"]) : 0;
+            
+            if( $intKey )
+                $this->objModel->setUpdateSolCreditoDato($intKey, $strValor);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, $strLlave, $strValor, 3);
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            $strLlave = "C_BANCO_TELEFONO_BANCO";
+            $strValor = isset($_POST["txt{$strLlave}"]) ? utils::getStringQuery($_POST["txt{$strLlave}"]) : "";
+            $intKey = isset($_POST["hid{$strLlave}"]) ? intval($_POST["hid{$strLlave}"]) : 0;
+            
+            if( $intKey )
+                $this->objModel->setUpdateSolCreditoDato($intKey, $strValor);                
+            else
+                $this->objModel->setInsertSolCreditoDato($intCliente, $strLlave, $strValor, 3);
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                 
+            
+            $this->objModel->setUpdateClienteCreditoEstado($intCliente, "FI4");                
+            
+            $arr["error"] = false;    
+            $arr["msg"] = "Datos Bloque 1 Guardados Correctamente";
+            
+            print json_encode($arr);    
+            die();
+            
+        }
+        
+        if( isset($_GET["drawFormCredito5"]) ){
+            
+            $intCliente = isset($_GET["cliente"]) ? intval($_GET["cliente"]) : 0;
+            $arrSolCredito = $this->objModel->getCliente($_SESSION['leterago']['id'], $intCliente);
+            
+            $arrSolCreditoDato = $this->objModel->getClienteDato($intCliente);    
+            $this->objView->drawFormCredito5($intCliente, ( isset($arrSolCredito[$intCliente]) ? $arrSolCredito[$intCliente] : array() ), $arrSolCreditoDato);
+            
+            die();
+        }
+        
+        if( isset($_GET["setFormCredito5"]) ){
+            
+            $intCliente = isset($_POST["hidCliente"]) ? intval($_POST["hidCliente"]) : 0;
+            
+            $arrSolCredito = $this->objModel->getSolCreditoClienteKey($intCliente);
+                
+            $arrSolCredito = $arrSolCredito[$intCliente];
+                
+            
+            $strBody = '<table style="width: 30%; border: 1px solid black;">
+                            <tr>
+                                <td nowrap style="width: 50%; text-align: left; font-weight: bold; border: 1px solid black;">
+                                    Cliente
+                                </td>
+                                <td nowrap style="width: 50%; text-align: center; border: 1px solid black;">
+                                    '.$arrSolCredito["nombres"].' '.$arrSolCredito["apellidos"].'
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <td nowrap style="width: 50%; text-align: left; font-weight: bold; border: 1px solid black; ">
+                                    Email
+                                </td>
+                                <td nowrap style="width: 50%; text-align: center; border: 1px solid black;">
+                                    '.$arrSolCredito["email"].'
+                                </td>
+                            </tr>
+                                  
+                            <tr>
+                                <td nowrap style="width: 50%; text-align: left; font-weight: bold; border: 1px solid black; ">
+                                    # Credito
+                                </td>
+                                <td nowrap style="width: 50%; text-align: center; border: 1px solid black;">
+                                    '.$intCliente.'
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <td nowrap colspan="2" style="text-align: center; font-weight: bold; ">
+                                    Navega a <a href="http://leterago.com/" target="_blank">leterago.com</a> para ver los datos ingresados en el Formulario de Credito
+                                </td>
+                            </tr>
+                            
+                        </table>';
+                        
+            utils::sendEmail("idroys4@gmail.com", "Credito de Cliente #".$intCliente.", Datos Enviados", $strBody, false);
+            
+            $this->objModel->setUpdateClienteCreditoEstado($intCliente, "FPA");                                    
+            
+            $arr["error"] = false;
+            $arr["msg"] = "Formulario enviado correctamente, pronto tendras respuesta via email ( {$arrSolCredito["email"]} )";
+            
+            print json_encode($arr);    
+            die();
+            
+        }
+        
+        if( isset($_GET["setCodigoSacAx365"]) ){
+        
+            $intCliente = isset($_GET["cliente"]) ? intval($_GET["cliente"]) : 0;
+            
+            $this->objView->setCodigoSacAx365($intCliente);
+            
+            die();
+        }
+        
+        if( isset($_GET["setCodigo365ClienteForm"]) ){
+        
+            $intCliente = isset($_POST["cliente"]) ? intval($_POST["cliente"]) : 0;
+            $strCodigio = isset($_POST["codigo365"]) ? trim($_POST["codigo365"]) : 0;
+            
+            $this->objModel->setCodigo365($intCliente, $strCodigio);
+            
+            $arr["intCliente"] = $intCliente;
+            $arr["strCodigio"] = $strCodigio;
+            $arr["error"] = false;
+            
+            print json_encode($arr);
+            
+            die();
+        }
+        
     }
               
 }

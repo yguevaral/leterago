@@ -11,11 +11,12 @@ class Database {
         return $db;
         */
         
-        $serverName = "localhost"; //serverName\instanceName
-
-        // Puesto que no se han especificado UID ni PWD en el array  $connectionInfo,
-        // La conexión se intentará utilizando la autenticación Windows.
-        $connectionInfo = array( "Database"=>"portal_leterago", "CharacterSet" => "UTF-8");
+        //$serverName = "localhost"; //serverName\instanceName
+        $serverName = "tcp:mpap018usa1.database.windows.net,1433";
+        
+        
+        //$connectionInfo = array( "Database"=>"portal_leterago", "CharacterSet" => "UTF-8");
+        $connectionInfo = array("UID" => "sysadmindb", "pwd" => "portalcreditos2021!", "Database" => "bdportalcreditos", "LoginTimeout" => 60, "Encrypt" => 1, "TrustServerCertificate" => 0);
         $conn = sqlsrv_connect( $serverName, $connectionInfo);
 
         if( $conn ) {

@@ -60,12 +60,12 @@ $nombre_usuario = $_SESSION['leterago']["nombres"];
         
         if( $_SESSION['leterago']['tipo'] == "CL" ) {
             ?>
-            <li class="nav-item <?php print $controller == "credito" ? "active" : ""?>">
+            <!--li class="nav-item <?php print $controller == "credito" ? "active" : ""?>">
                 <a class="nav-link" href="<?= base_url ?>credito/index">
                     <i class="material-icons">swap_horiz</i>
                     <p> Creditos </p>
                 </a>
-            </li>
+            </li-->
             
             <li class="nav-item <?php print $controller == "cliente" ? "active" : ""?>">
                 <a class="nav-link" href="<?= base_url ?>cliente/index">
@@ -117,12 +117,12 @@ $nombre_usuario = $_SESSION['leterago']["nombres"];
             
             ?>
                 
-            <li class="nav-item <?php print $controller == "credito" ? "active" : ""?>">
+            <!--li class="nav-item <?php print $controller == "credito" ? "active" : ""?>">
                 <a class="nav-link" href="<?= base_url ?>credito/index">
                     <i class="material-icons">swap_horiz</i>
                     <p> Creditos </p>
                 </a>
-            </li>
+            </li-->
             
             <li class="nav-item <?php print $controller == "cliente" ? "active" : ""?>">
                 <a class="nav-link" href="<?= base_url ?>cliente/index">

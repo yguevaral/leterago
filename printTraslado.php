@@ -1,4 +1,31 @@
 <?php
+
+//$serverName = "localhost"; //serverName\instanceName https://www.youtube.com/watch?v=Een04uICLtg
+$serverName = "mpap018usa1.database.windows.net"; //serverName\instanceName
+
+// Puesto que no se han especificado UID ni PWD en el array  $connectionInfo,
+// La conexión se intentará utilizando la autenticación Windows.
+//$connectionInfo = array( "Database"=>"portal_leterago", "CharacterSet" => "UTF-8");
+$connectionInfo = array( 
+                    "Database"=>"bdprotalcreditos", 
+                    "UID"=>"appcreditos@leterago.com.gt", 
+                    "PWD"=>'L3t9rag0m3$kjl', 
+                    "Authentication"=>'SqlPassword',
+                    "CharacterSet" => "UTF-8"
+                    );
+$conn = sqlsrv_connect( $serverName, $connectionInfo);
+
+if( $conn ) {
+     //echo "Conexión establecida.<br />";
+}else{
+     echo "Conexión no se pudo establecer.<br />";
+     print "<pre>";
+     print_r( sqlsrv_errors());
+     print "</pre>";
+     die();
+}      
+
+die();
 $idTraslado = isset($_GET["k"]) ? intval($_GET["k"]) : 0;
 
 require_once 'config/db.php';
